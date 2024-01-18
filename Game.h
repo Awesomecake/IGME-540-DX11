@@ -17,7 +17,13 @@ public:
 	void Init();
 	void OnResize();
 	void Update(float deltaTime, float totalTime);
+	void ImGuiUpdate(float deltaTime, float totalTime);
+	void BuildUI();
 	void Draw(float deltaTime, float totalTime);
+
+	//ImGui test value
+	bool showImGuiDemoWindow = false;
+	DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
 
 private:
 
