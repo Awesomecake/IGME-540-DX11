@@ -302,7 +302,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erases what's on the screen)
-		const float bgColor[4] = { 0.4f, 0.6f, 0.75f, 1.0f }; // Cornflower Blue
+		float bgColor[4] = { color.x, color.y, color.z, color.w };
 		context->ClearRenderTargetView(backBufferRTV.Get(), bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
@@ -399,6 +399,44 @@ void Game::BuildUI()
 	{
 		if (ImGui::Button("Hide ImGui Demo Window"))
 			showImGuiDemoWindow = false;
+	}
+
+	float arr[] = { color.x, color.y, color.z, color.w};
+	ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
+
+	if (!randomizeColorOffset)
+	{
+		if (ImGui::Button("Randomly change color"))
+			randomizeColorOffset = true;
+	}
+	else
+	{
+		switch (rand() % 4)
+		{
+		case 0:
+			color.x += (rand() % 10 - 4.5) / 200.f;
+			if (color.x > 1) color.x = 1;
+			if (color.x < 0) color.x = 0;
+			break;
+		case 1:
+			color.y += (rand() % 10 - 4.5) / 200.f;
+			if (color.y > 1) color.y = 1;
+			if (color.y < 0) color.y = 0;
+			break;
+		case 2:
+			color.z += (rand() % 10 - 4.5) / 200.f;
+			if (color.z > 1) color.z = 1;
+			if (color.z < 0) color.z = 0;
+			break;
+		case 3:
+			color.w += (rand() % 10 - 4.5) / 200.f;
+			if (color.w > 1) color.w = 1;
+			if (color.w < 0) color.w = 0;
+			break;
+		}
+
+		if (ImGui::Button("Turn off random color change"))
+			randomizeColorOffset = false;
 	}
 
 	ImGui::End(); // Ends the current window

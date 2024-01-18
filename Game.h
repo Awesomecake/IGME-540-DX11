@@ -23,6 +23,7 @@ public:
 
 	//ImGui test value
 	bool showImGuiDemoWindow = false;
+	bool randomizeColorOffset = false;
 	DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
 
 private:
