@@ -289,7 +289,7 @@ void Game::Update(float deltaTime, float totalTime)
 		Quit();
 
 	ImGuiUpdate(deltaTime, totalTime);
-	BuildUI();
+	BuildUI(deltaTime, totalTime);
 }
 
 // --------------------------------------------------------
@@ -379,7 +379,7 @@ void Game::ImGuiUpdate(float deltaTime, float totalTime)
 		ImGui::ShowDemoWindow();
 }
 
-void Game::BuildUI()
+void Game::BuildUI(float deltaTime, float totalTime)
 {
 	ImGui::Begin("Inspector"); // Everything after is part of the window
 
@@ -414,22 +414,22 @@ void Game::BuildUI()
 		switch (rand() % 4)
 		{
 		case 0:
-			color.x += (rand() % 10 - 4.5) / 200.f;
+			color.x += deltaTime * (rand() % 10 - 4.5) / 2.f;
 			if (color.x > 1) color.x = 1;
 			if (color.x < 0) color.x = 0;
 			break;
 		case 1:
-			color.y += (rand() % 10 - 4.5) / 200.f;
+			color.y += deltaTime * (rand() % 10 - 4.5) / 2.f;
 			if (color.y > 1) color.y = 1;
 			if (color.y < 0) color.y = 0;
 			break;
 		case 2:
-			color.z += (rand() % 10 - 4.5) / 200.f;
+			color.z += deltaTime * (rand() % 10 - 4.5) / 2.f;
 			if (color.z > 1) color.z = 1;
 			if (color.z < 0) color.z = 0;
 			break;
 		case 3:
-			color.w += (rand() % 10 - 4.5) / 200.f;
+			color.w += deltaTime * (rand() % 10 - 4.5) / 2.f;
 			if (color.w > 1) color.w = 1;
 			if (color.w < 0) color.w = 0;
 			break;

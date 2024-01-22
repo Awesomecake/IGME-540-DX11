@@ -18,7 +18,7 @@ public:
 	void OnResize();
 	void Update(float deltaTime, float totalTime);
 	void ImGuiUpdate(float deltaTime, float totalTime);
-	void BuildUI();
+	void BuildUI(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
 
 	//ImGui test value
