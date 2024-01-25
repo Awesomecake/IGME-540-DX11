@@ -3,6 +3,7 @@
 #include "DXCore.h"
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
+#include "Mesh.h"
 
 class Game 
 	: public DXCore
@@ -26,20 +27,15 @@ public:
 	bool randomizeColorOffset = false;
 	DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
 
+	//Meshes
+	Mesh triangle;
+	Mesh trapezoid;
+
 private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders(); 
 	void CreateGeometry();
-
-	// Note the usage of ComPtr below
-	//  - This is a smart pointer for objects that abide by the
-	//     Component Object Model, which DirectX objects do
-	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
-
-	// Buffers to hold actual geometry data
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 	
 	// Shaders and shader-related constructs
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
