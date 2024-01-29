@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include "Mesh.h"
+#include <memory>
 
 class Game 
 	: public DXCore
@@ -28,8 +29,9 @@ public:
 	DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
 
 	//Meshes
-	Mesh triangle;
-	Mesh trapezoid;
+	std::shared_ptr<Mesh> triangle;
+	std::shared_ptr<Mesh> trapezoid;
+	std::shared_ptr<Mesh> shape;
 
 private:
 

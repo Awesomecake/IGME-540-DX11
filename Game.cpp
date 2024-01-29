@@ -214,7 +214,7 @@ void Game::CreateGeometry()
 	// - But just to see how it's done...
 	unsigned int triIndices[] = {0, 1, 2};
 
-	triangle = Mesh(triVertices,4, triIndices, 3, device);
+	triangle = std::make_shared<Mesh>(triVertices,4, triIndices, 3, device);
 
 	Vertex trapVertices[] =
 	{
@@ -222,13 +222,25 @@ void Game::CreateGeometry()
 		{ XMFLOAT3(+0.7f, 0.3f, +0.0f), blue },
 		{ XMFLOAT3(0.3f, 0.3f, +0.0f), blue },
 		{ XMFLOAT3(0.4f, 0.6f, +0.0f), green }
-
 	};
 
 	unsigned int trapIndices[] = { 0, 1, 2, 0, 2, 3};
+	trapezoid = std::make_shared<Mesh>(trapVertices, 4, trapIndices,6, device);
 
+	Vertex shapeVertices[] =
+	{
+		{ XMFLOAT3(-0.4f, -0.5f, +0.0f), blue },
+		{ XMFLOAT3(-0.6f, -0.5f, +0.0f), blue },
 
-	trapezoid = Mesh(trapVertices, 4, trapIndices,6, device);
+		{ XMFLOAT3(-0.5f, -0.6f, +0.0f), red },
+		{ XMFLOAT3(-0.5f, -0.4f, +0.0f), red },
+
+		{ XMFLOAT3(-0.2f, -0.55f, +0.0f), red },
+		{ XMFLOAT3(-0.2f, -0.45f, +0.0f), red }
+	};
+
+	unsigned int shapeIndices[] = {1,0,2,0,1,3,0,3,5,2,0,4};
+	shape = std::make_shared<Mesh>(shapeVertices, 6, shapeIndices, 12, device);
 }
 
 
@@ -273,8 +285,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	triangle.Draw(context);
-	trapezoid.Draw(context);
+	triangle.get()->Draw(context);
+	trapezoid.get()->Draw(context);
+	shape.get()->Draw(context);
 
 	{
 		ImGui::Render(); // Turns this frame’s UI into renderable triangles
@@ -323,61 +336,77 @@ void Game::ImGuiUpdate(float deltaTime, float totalTime)
 void Game::BuildUI(float deltaTime, float totalTime)
 {
 	ImGui::Begin("Inspector"); // Everything after is part of the window
-
-	ImGui::Text("Framerate: %f fps", ImGui::GetIO().Framerate);
-	ImGui::Text("Window Resolution: %dx%d", windowWidth, windowHeight);
-
-	// Can create a 3 or 4-component color editors, too!
-	ImGui::ColorEdit4("RGBA color editor", &color.x);
-
-	// Create a button and test for a click
-	if (!showImGuiDemoWindow)
+	if (ImGui::TreeNode("App Details"))
 	{
-		if (ImGui::Button("Show ImGui Demo Window"))
-			showImGuiDemoWindow = true;
-	}
-	else
-	{
-		if (ImGui::Button("Hide ImGui Demo Window"))
-			showImGuiDemoWindow = false;
-	}
+		ImGui::Text("Framerate: %f fps", ImGui::GetIO().Framerate);
+		ImGui::Text("Window Resolution: %dx%d", windowWidth, windowHeight);
 
-	float arr[] = { color.x, color.y, color.z, color.w};
-	ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
+		// Can create a 3 or 4-component color editors, too!
+		ImGui::ColorEdit4("RGBA color editor", &color.x);
 
-	if (!randomizeColorOffset)
-	{
-		if (ImGui::Button("Randomly change color"))
-			randomizeColorOffset = true;
-	}
-	else
-	{
-		switch (rand() % 4)
+
+		// Create a button and test for a click
+		if (!showImGuiDemoWindow)
 		{
-		case 0:
-			color.x += deltaTime * (rand() % 10 - 4.5) / 2.f;
-			if (color.x > 1) color.x = 1;
-			if (color.x < 0) color.x = 0;
-			break;
-		case 1:
-			color.y += deltaTime * (rand() % 10 - 4.5) / 2.f;
-			if (color.y > 1) color.y = 1;
-			if (color.y < 0) color.y = 0;
-			break;
-		case 2:
-			color.z += deltaTime * (rand() % 10 - 4.5) / 2.f;
-			if (color.z > 1) color.z = 1;
-			if (color.z < 0) color.z = 0;
-			break;
-		case 3:
-			color.w += deltaTime * (rand() % 10 - 4.5) / 2.f;
-			if (color.w > 1) color.w = 1;
-			if (color.w < 0) color.w = 0;
-			break;
+			if (ImGui::Button("Show ImGui Demo Window"))
+				showImGuiDemoWindow = true;
+		}
+		else
+		{
+			if (ImGui::Button("Hide ImGui Demo Window"))
+				showImGuiDemoWindow = false;
 		}
 
-		if (ImGui::Button("Turn off random color change"))
-			randomizeColorOffset = false;
+		float arr[] = { color.x, color.y, color.z, color.w };
+		ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
+
+		if (!randomizeColorOffset)
+		{
+			if (ImGui::Button("Randomly change color"))
+				randomizeColorOffset = true;
+		}
+		else
+		{
+			switch (rand() % 4)
+			{
+			case 0:
+				color.x += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (color.x > 1) color.x = 1;
+				if (color.x < 0) color.x = 0;
+				break;
+			case 1:
+				color.y += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (color.y > 1) color.y = 1;
+				if (color.y < 0) color.y = 0;
+				break;
+			case 2:
+				color.z += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (color.z > 1) color.z = 1;
+				if (color.z < 0) color.z = 0;
+				break;
+			case 3:
+				color.w += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (color.w > 1) color.w = 1;
+				if (color.w < 0) color.w = 0;
+				break;
+			}
+
+			if (ImGui::Button("Turn off random color change"))
+				randomizeColorOffset = false;
+		}
+
+		ImGui::TreePop();
+		ImGui::Spacing();
+	}
+
+	if (ImGui::TreeNode("Meshes"))
+	{
+		ImGui::Text("Mesh 0: %u triangle(s)", triangle.get()->GetIndexCount()/3);
+		ImGui::Text("Mesh 1: %u triangle(s)", trapezoid.get()->GetIndexCount()/3);
+		ImGui::Text("Mesh 2: %u triangle(s)", shape.get()->GetIndexCount()/3);
+
+		ImGui::TreePop();
+		ImGui::Spacing();
 	}
 
 	ImGui::End(); // Ends the current window

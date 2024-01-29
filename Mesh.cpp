@@ -78,7 +78,7 @@ Microsoft::WRL::ComPtr<ID3D11Buffer> Mesh::GetIndexBuffer()
 	return indexBuffer;
 };
 
-int Mesh::GetIndexCount()
+unsigned int Mesh::GetIndexCount()
 {
 	return indexCount;
 };
