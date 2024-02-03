@@ -28,6 +28,9 @@ public:
 	bool randomizeColorOffset = false;
 	DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
 
+	//Constant Buffer
+	Microsoft::WRL::ComPtr<ID3D11Buffer> constBuffer;
+
 	//Meshes
 	std::shared_ptr<Mesh> triangle;
 	std::shared_ptr<Mesh> trapezoid;
