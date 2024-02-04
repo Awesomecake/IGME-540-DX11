@@ -71,6 +71,20 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 	CreateGeometry();
+
+	//Create Constant Buffer
+	{
+		unsigned int size = sizeof(VertexShaderData);
+		size = (size + 15) / 16 * 16;
+
+		// Describe the constant buffer
+		D3D11_BUFFER_DESC cbDesc = {}; // Sets struct to all zeros
+		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cbDesc.ByteWidth = size; // Must be a multiple of 16
+		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+		device->CreateBuffer(&cbDesc, 0, constBuffer.GetAddressOf());
+	}
 	
 	// Set initial graphics API state
 	//  - These settings persist until we change them
@@ -182,17 +196,6 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
-	unsigned int size = sizeof(VertexShaderData);
-	size = (size + 15) / 16 * 16;
-
-	// Describe the constant buffer
-	D3D11_BUFFER_DESC cbDesc = {}; // Sets struct to all zeros
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.ByteWidth = size; // Must be a multiple of 16
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	device->CreateBuffer(&cbDesc, 0, constBuffer.GetAddressOf());
-
 	// Create some temporary variables to represent colors
 	// - Not necessary, just makes things more readable
 	XMFLOAT4 red	= XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -290,26 +293,29 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erases what's on the screen)
-		float bgColor[4] = { color.x, color.y, color.z, color.w };
+		float bgColor[4] = { backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w };
 		context->ClearRenderTargetView(backBufferRTV.Get(), bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	VertexShaderData vsData;
-	vsData.colorTint = XMFLOAT4(1.0f, 0.5f, 0.5f, 1.0f);
-	vsData.offset = XMFLOAT3(0.25f, 0.0f, 0.0f);
+	//Updating Constant Buffer
+	{
+		VertexShaderData vsData;
+		vsData.colorTint = cbColorTint;
+		vsData.offset = cbOffset;
 
-	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-	context->Map(constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-	memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
-	context->Unmap(constBuffer.Get(), 0);
+		D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
+		context->Map(constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
+		memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
+		context->Unmap(constBuffer.Get(), 0);
 
-	context->VSSetConstantBuffers(
-		0, // Which slot (register) to bind the buffer to?
-		1, // How many are we setting right now?
-		constBuffer.GetAddressOf()); // Array of buffers (or address of just one)
+		context->VSSetConstantBuffers(
+			0, // Which slot (register) to bind the buffer to?
+			1, // How many are we setting right now?
+			constBuffer.GetAddressOf()); // Array of buffers (or address of just one)
+	}
 
 	triangle.get()->Draw(context);
 	trapezoid.get()->Draw(context);
@@ -368,7 +374,7 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		ImGui::Text("Window Resolution: %dx%d", windowWidth, windowHeight);
 
 		// Can create a 3 or 4-component color editors, too!
-		ImGui::ColorEdit4("RGBA color editor", &color.x);
+		ImGui::ColorEdit4("RGBA color editor", &backgroundColor.x);
 
 
 		// Create a button and test for a click
@@ -383,7 +389,7 @@ void Game::BuildUI(float deltaTime, float totalTime)
 				showImGuiDemoWindow = false;
 		}
 
-		float arr[] = { color.x, color.y, color.z, color.w };
+		float arr[] = { backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w };
 		ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
 
 		if (!randomizeColorOffset)
@@ -396,24 +402,24 @@ void Game::BuildUI(float deltaTime, float totalTime)
 			switch (rand() % 4)
 			{
 			case 0:
-				color.x += deltaTime * (rand() % 10 - 4.5) / 2.f;
-				if (color.x > 1) color.x = 1;
-				if (color.x < 0) color.x = 0;
+				backgroundColor.x += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (backgroundColor.x > 1) backgroundColor.x = 1;
+				if (backgroundColor.x < 0) backgroundColor.x = 0;
 				break;
 			case 1:
-				color.y += deltaTime * (rand() % 10 - 4.5) / 2.f;
-				if (color.y > 1) color.y = 1;
-				if (color.y < 0) color.y = 0;
+				backgroundColor.y += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (backgroundColor.y > 1) backgroundColor.y = 1;
+				if (backgroundColor.y < 0) backgroundColor.y = 0;
 				break;
 			case 2:
-				color.z += deltaTime * (rand() % 10 - 4.5) / 2.f;
-				if (color.z > 1) color.z = 1;
-				if (color.z < 0) color.z = 0;
+				backgroundColor.z += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (backgroundColor.z > 1) backgroundColor.z = 1;
+				if (backgroundColor.z < 0) backgroundColor.z = 0;
 				break;
 			case 3:
-				color.w += deltaTime * (rand() % 10 - 4.5) / 2.f;
-				if (color.w > 1) color.w = 1;
-				if (color.w < 0) color.w = 0;
+				backgroundColor.w += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				if (backgroundColor.w > 1) backgroundColor.w = 1;
+				if (backgroundColor.w < 0) backgroundColor.w = 0;
 				break;
 			}
 
@@ -431,6 +437,14 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		ImGui::Text("Mesh 1: %u triangle(s)", trapezoid.get()->GetIndexCount()/3);
 		ImGui::Text("Mesh 2: %u triangle(s)", shape.get()->GetIndexCount()/3);
 
+		ImGui::TreePop();
+		ImGui::Spacing();
+	}
+
+	if (ImGui::TreeNode("Constant Buffer"))
+	{
+		ImGui::ColorEdit4("##RefColor", &cbColorTint.x);
+		ImGui::DragFloat3("DragFloat", &cbOffset.x, 0.005f, -5.0f, 5.0f, "%.3f");
 		ImGui::TreePop();
 		ImGui::Spacing();
 	}

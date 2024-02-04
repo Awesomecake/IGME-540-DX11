@@ -26,7 +26,9 @@ public:
 	//ImGui test value
 	bool showImGuiDemoWindow = false;
 	bool randomizeColorOffset = false;
-	DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
+	DirectX::XMFLOAT4 backgroundColor = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
+	DirectX::XMFLOAT4 cbColorTint = DirectX::XMFLOAT4(1.0f, 0.5f, 0.5f, 1.0f);
+	DirectX::XMFLOAT3 cbOffset = DirectX::XMFLOAT3(0.25f, 0.0f, 0.0f);
 
 	//Constant Buffer
 	Microsoft::WRL::ComPtr<ID3D11Buffer> constBuffer;
