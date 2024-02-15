@@ -4,7 +4,9 @@
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include "Mesh.h"
+#include "GameEntity.h"
 #include <memory>
+#include <vector>
 
 class Game 
 	: public DXCore
@@ -27,8 +29,6 @@ public:
 	bool showImGuiDemoWindow = false;
 	bool randomizeColorOffset = false;
 	DirectX::XMFLOAT4 backgroundColor = DirectX::XMFLOAT4(1.0f, 0.0f, 0.5f, 1.0f);
-	DirectX::XMFLOAT4 cbColorTint = DirectX::XMFLOAT4(1.0f, 0.5f, 0.5f, 1.0f);
-	DirectX::XMFLOAT3 cbOffset = DirectX::XMFLOAT3(0.25f, 0.0f, 0.0f);
 
 	//Constant Buffer
 	Microsoft::WRL::ComPtr<ID3D11Buffer> constBuffer;
@@ -36,7 +36,9 @@ public:
 	//Meshes
 	std::shared_ptr<Mesh> triangle;
 	std::shared_ptr<Mesh> trapezoid;
-	std::shared_ptr<Mesh> shape;
+	std::shared_ptr<Mesh> complexShape;
+
+	std::vector<GameEntity> gameEntities;
 
 private:
 

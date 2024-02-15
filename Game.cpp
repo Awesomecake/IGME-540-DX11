@@ -4,6 +4,7 @@
 #include "PathHelpers.h"
 #include "Mesh.h"
 #include "BufferStructs.h"
+#include <string>
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
@@ -255,7 +256,14 @@ void Game::CreateGeometry()
 	};
 
 	unsigned int shapeIndices[] = {1,0,2,0,1,3,0,3,5,2,0,4};
-	shape = std::make_shared<Mesh>(shapeVertices, 6, shapeIndices, 12, device);
+	complexShape = std::make_shared<Mesh>(shapeVertices, 6, shapeIndices, 12, device);
+
+	gameEntities.push_back(GameEntity(triangle));
+	gameEntities.push_back(GameEntity(trapezoid));
+	gameEntities.push_back(GameEntity(complexShape));
+	gameEntities.push_back(GameEntity(complexShape));
+	gameEntities.push_back(GameEntity(triangle));
+	gameEntities.push_back(GameEntity(trapezoid));
 }
 
 
@@ -300,26 +308,11 @@ void Game::Draw(float deltaTime, float totalTime)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	//Updating Constant Buffer
+	for(GameEntity entity : gameEntities)
 	{
-		VertexShaderData vsData;
-		vsData.colorTint = cbColorTint;
-		vsData.offset = cbOffset;
-
-		D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-		context->Map(constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-		memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
-		context->Unmap(constBuffer.Get(), 0);
-
-		context->VSSetConstantBuffers(
-			0, // Which slot (register) to bind the buffer to?
-			1, // How many are we setting right now?
-			constBuffer.GetAddressOf()); // Array of buffers (or address of just one)
+		entity.Draw(context, constBuffer);
 	}
 
-	triangle.get()->Draw(context);
-	trapezoid.get()->Draw(context);
-	shape.get()->Draw(context);
 
 	{
 		ImGui::Render(); // Turns this frame’s UI into renderable triangles
@@ -435,18 +428,36 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	{
 		ImGui::Text("Mesh 0: %u triangle(s)", triangle.get()->GetIndexCount()/3);
 		ImGui::Text("Mesh 1: %u triangle(s)", trapezoid.get()->GetIndexCount()/3);
-		ImGui::Text("Mesh 2: %u triangle(s)", shape.get()->GetIndexCount()/3);
+		ImGui::Text("Mesh 2: %u triangle(s)", complexShape.get()->GetIndexCount()/3);
 
 		ImGui::TreePop();
 		ImGui::Spacing();
 	}
 
-	if (ImGui::TreeNode("Constant Buffer"))
+	if (ImGui::TreeNode("Scene Entities"))
 	{
-		ImGui::ColorEdit4("##RefColor", &cbColorTint.x);
-		ImGui::DragFloat3("DragFloat", &cbOffset.x, 0.005f, -5.0f, 5.0f, "%.3f");
+		for (int i = 0; i < gameEntities.size(); i++)
+		{
+			std::string string = "Entity " + std::to_string(i);
+			if (ImGui::TreeNode(string.data()))
+			{
+				XMFLOAT3 position = gameEntities[i].GetTransform().GetPosition();
+				ImGui::DragFloat3("Position", &position.x, 0.005f, -5.0f, 5.0f, "%.3f");
+				gameEntities[i].GetTransform().SetPosition(position);
+
+				XMFLOAT3 rotation = gameEntities[i].GetTransform().GetPitchYawRoll();
+				ImGui::DragFloat3("Rotation (Radians)", &rotation.x, 0.005f, -5.0f, 5.0f, "%.3f");
+				gameEntities[i].GetTransform().SetRotation(rotation);
+
+				XMFLOAT3 scale = gameEntities[i].GetTransform().GetScale();
+				ImGui::DragFloat3("Scale", &scale.x, 0.005f, -5.0f, 5.0f, "%.3f");
+				gameEntities[i].GetTransform().SetScale(scale);
+
+				ImGui::TreePop();
+			}
+		}
+
 		ImGui::TreePop();
-		ImGui::Spacing();
 	}
 
 	ImGui::End(); // Ends the current window
