@@ -93,11 +93,43 @@ DirectX::XMFLOAT4X4 Transform::GetWorldInverseTransposeMatrix()
 	return worldInverseTransposeMatrix;
 }
 
+DirectX::XMFLOAT3 Transform::GetRight()
+{
+	DirectX::XMVECTOR rightVector = DirectX::XMVectorSet(1, 0, 0, 0);
+	rightVector = DirectX::XMVector3Rotate(rightVector, DirectX::XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z));
+	
+	DirectX::XMFLOAT3 newRightVec = DirectX::XMFLOAT3();
+	DirectX::XMStoreFloat3(&newRightVec, rightVector);
+	return newRightVec;
+}
+
+DirectX::XMFLOAT3 Transform::GetUp()
+{
+	DirectX::XMVECTOR upVector = DirectX::XMVectorSet(0, 1, 0, 0);
+	upVector = DirectX::XMVector3Rotate(upVector, DirectX::XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z));
+
+	DirectX::XMFLOAT3 newUpVec = DirectX::XMFLOAT3();
+	DirectX::XMStoreFloat3(&newUpVec, upVector);
+	return newUpVec;
+}
+
+DirectX::XMFLOAT3 Transform::GetForward()
+{
+	DirectX::XMVECTOR forwardVector = DirectX::XMVectorSet(0, 0, 1, 0);
+	forwardVector = DirectX::XMVector3Rotate(forwardVector, DirectX::XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z));
+
+	DirectX::XMFLOAT3 newForwardVec = DirectX::XMFLOAT3();
+	DirectX::XMStoreFloat3(&newForwardVec, forwardVector);
+	return newForwardVec;
+}
+
 void Transform::MoveAbsolute(float x, float y, float z)
 {
 	position.x += x;
 	position.y += y;
 	position.z += z;
+
+	isDirty = true;
 }
 
 void Transform::MoveAbsolute(DirectX::XMFLOAT3 offset)
@@ -105,6 +137,20 @@ void Transform::MoveAbsolute(DirectX::XMFLOAT3 offset)
 	position.x += offset.x;
 	position.y += offset.y;
 	position.z += offset.z;
+
+	isDirty = true;
+}
+
+void Transform::MoveRelative(float x, float y, float z)
+{
+	DirectX::XMVECTOR moveOffset = DirectX::XMVectorSet(x, y, z, 0.0f);
+	DirectX::XMVECTOR quat = DirectX::XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+	moveOffset = DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&position), DirectX::XMVector3Rotate(moveOffset, quat));
+
+	DirectX::XMStoreFloat3(&position, moveOffset);
+
+	isDirty = true;
 }
 
 void Transform::Rotate(float pitch, float yaw, float roll)
@@ -112,6 +158,8 @@ void Transform::Rotate(float pitch, float yaw, float roll)
 	rotation.x += pitch;
 	rotation.y += yaw;
 	rotation.z += roll;
+
+	isDirty = true;
 }
 
 void Transform::Rotate(DirectX::XMFLOAT3 rotationOffset)
@@ -119,6 +167,8 @@ void Transform::Rotate(DirectX::XMFLOAT3 rotationOffset)
 	rotation.x += rotationOffset.x;
 	rotation.y += rotationOffset.y;
 	rotation.z += rotationOffset.z;
+
+	isDirty = true;
 }
 
 void Transform::Scale(float x, float y, float z)
@@ -126,6 +176,8 @@ void Transform::Scale(float x, float y, float z)
 	scale.x *= x;
 	scale.y *= y;
 	scale.z *= z;
+
+	isDirty = true;
 }
 
 void Transform::Scale(DirectX::XMFLOAT3 scaleAmount)
@@ -133,4 +185,6 @@ void Transform::Scale(DirectX::XMFLOAT3 scaleAmount)
 	scale.x *= scaleAmount.x;
 	scale.y *= scaleAmount.y;
 	scale.z *= scaleAmount.z;
+
+	isDirty = true;
 }
