@@ -23,10 +23,8 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 
 void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11Buffer> constBuffer)
 {
-	DirectX::XMFLOAT4 cbColorTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
 	VertexShaderData vsData;
-	vsData.colorTint = cbColorTint;
+	vsData.colorTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	vsData.matrix = transform.GetWorldMatrix();
 
 	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};

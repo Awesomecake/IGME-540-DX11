@@ -234,10 +234,10 @@ void Game::CreateGeometry()
 
 	Vertex trapVertices[] =
 	{
-		{ XMFLOAT3(+0.6f, +0.6f, +0.0f), green },
-		{ XMFLOAT3(+0.7f, 0.3f, +0.0f), blue },
-		{ XMFLOAT3(0.3f, 0.3f, +0.0f), blue },
-		{ XMFLOAT3(0.4f, 0.6f, +0.0f), green }
+		{ XMFLOAT3(0.1f, +0.15f, +0.0f), green },
+		{ XMFLOAT3(0.2f, -0.15f, +0.0f), blue },
+		{ XMFLOAT3(-0.2f, -0.15f, +0.0f), blue },
+		{ XMFLOAT3(-0.1f, 0.15f, +0.0f), green }
 	};
 
 	unsigned int trapIndices[] = { 0, 1, 2, 0, 2, 3};
@@ -245,14 +245,14 @@ void Game::CreateGeometry()
 
 	Vertex shapeVertices[] =
 	{
-		{ XMFLOAT3(-0.4f, -0.5f, +0.0f), blue },
-		{ XMFLOAT3(-0.6f, -0.5f, +0.0f), blue },
+		{ XMFLOAT3(-0.0f, -0.0f, +0.0f), blue },
+		{ XMFLOAT3(-0.2f, -0.0f, +0.0f), blue },
 
-		{ XMFLOAT3(-0.5f, -0.6f, +0.0f), red },
-		{ XMFLOAT3(-0.5f, -0.4f, +0.0f), red },
+		{ XMFLOAT3(-0.1f, -0.1f, +0.0f), red },
+		{ XMFLOAT3(-0.1f, 0.1f, +0.0f), red },
 
-		{ XMFLOAT3(-0.2f, -0.55f, +0.0f), red },
-		{ XMFLOAT3(-0.2f, -0.45f, +0.0f), red }
+		{ XMFLOAT3(0.2f, -0.05f, +0.0f), red },
+		{ XMFLOAT3(0.2f, 0.05f, +0.0f), red }
 	};
 
 	unsigned int shapeIndices[] = {1,0,2,0,1,3,0,3,5,2,0,4};
@@ -264,6 +264,11 @@ void Game::CreateGeometry()
 	gameEntities.push_back(GameEntity(complexShape));
 	gameEntities.push_back(GameEntity(triangle));
 	gameEntities.push_back(GameEntity(trapezoid));
+
+	gameEntities[0].GetTransform().SetPosition(-0.5, -0.5, 0);
+	gameEntities[1].GetTransform().SetPosition(0.5, 0.5, 0);
+	gameEntities[5].GetTransform().SetPosition(-0.5, 0.5, 0);
+
 }
 
 
@@ -286,6 +291,52 @@ void Game::Update(float deltaTime, float totalTime)
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE))
 		Quit();
+
+	//Scaling Entity 0
+	{
+		XMFLOAT3 scale = gameEntities[0].GetTransform().GetScale();
+		scale.x = abs(1.5 * cos(totalTime));
+		scale.y = abs(1.5 * sin(totalTime));
+		gameEntities[0].GetTransform().SetScale(scale);
+	}
+
+	//Rotating Entity 1
+	{
+		XMFLOAT3 rot = gameEntities[1].GetTransform().GetPitchYawRoll();
+		rot.z = totalTime;
+		gameEntities[1].GetTransform().SetRotation(rot);
+	}
+
+	//Moving Entity 2
+	{
+		XMFLOAT3 pos = gameEntities[2].GetTransform().GetPosition();
+		pos.x = 0.8 * cos(totalTime);
+		pos.y = 0.8 * sin(totalTime);
+		gameEntities[2].GetTransform().SetPosition(pos);
+	}
+
+
+	//Moving & rotating Entity 3
+	{
+		XMFLOAT3 pos = gameEntities[3].GetTransform().GetPosition();
+		pos.x = -0.8 * cos(totalTime);
+		gameEntities[3].GetTransform().SetPosition(pos);
+
+		XMFLOAT3 rot = gameEntities[3].GetTransform().GetPitchYawRoll();
+		rot.z = totalTime;
+		gameEntities[3].GetTransform().SetRotation(rot);
+	}
+
+	//Moving & rotating Entity 4
+	{
+		XMFLOAT3 pos = gameEntities[4].GetTransform().GetPosition();
+		pos.y = -0.8 * sin(totalTime);
+		gameEntities[4].GetTransform().SetPosition(pos);
+
+		XMFLOAT3 rot = gameEntities[4].GetTransform().GetPitchYawRoll();
+		rot.z = totalTime;
+		gameEntities[4].GetTransform().SetRotation(rot);
+	}
 
 	ImGuiUpdate(deltaTime, totalTime);
 	BuildUI(deltaTime, totalTime);
