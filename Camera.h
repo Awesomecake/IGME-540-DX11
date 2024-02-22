@@ -12,9 +12,9 @@ private:
 
 	bool isDirty = false;
 
-	float fov = 45;
-	float moveSpeed = 1;
-	float mouseSensitivity = 0.005;
+	float fov = 45.f;
+	float moveSpeed = 1.f;
+	float mouseSensitivity = 0.0050f;
 
 public:
 	Camera(float aspect, float _fov, DirectX::XMFLOAT3 position);

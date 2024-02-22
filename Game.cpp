@@ -217,8 +217,8 @@ void Game::Update(float deltaTime, float totalTime)
 	//Scaling Entity 0
 	{
 		XMFLOAT3 scale = gameEntities[0].GetTransform().GetScale();
-		scale.x = abs(1.5 * cos(totalTime));
-		scale.y = abs(1.5 * sin(totalTime));
+		scale.x = (float) abs(1.5 * cos(totalTime));
+		scale.y = (float) abs(1.5 * sin(totalTime));
 		gameEntities[0].GetTransform().SetScale(scale);
 	}
 
@@ -232,8 +232,8 @@ void Game::Update(float deltaTime, float totalTime)
 	//Moving Entity 2
 	{
 		XMFLOAT3 pos = gameEntities[2].GetTransform().GetPosition();
-		pos.x = 0.8 * cos(totalTime);
-		pos.y = 0.8 * sin(totalTime);
+		pos.x = (float) (0.8 * cos(totalTime));
+		pos.y = (float) (0.8 * sin(totalTime));
 		gameEntities[2].GetTransform().SetPosition(pos);
 	}
 
@@ -241,7 +241,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//Moving & rotating Entity 3
 	{
 		XMFLOAT3 pos = gameEntities[3].GetTransform().GetPosition();
-		pos.x = -0.8 * cos(totalTime);
+		pos.x = (float) (-0.8 * cos(totalTime));
 		gameEntities[3].GetTransform().SetPosition(pos);
 
 		XMFLOAT3 rot = gameEntities[3].GetTransform().GetPitchYawRoll();
@@ -252,7 +252,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//Moving & rotating Entity 4
 	{
 		XMFLOAT3 pos = gameEntities[4].GetTransform().GetPosition();
-		pos.y = -0.8 * sin(totalTime);
+		pos.y = (float) (-0.8 * sin(totalTime));
 		gameEntities[4].GetTransform().SetPosition(pos);
 
 		XMFLOAT3 rot = gameEntities[4].GetTransform().GetPitchYawRoll();
@@ -379,22 +379,22 @@ void Game::BuildUI(float deltaTime, float totalTime)
 			switch (rand() % 4)
 			{
 			case 0:
-				backgroundColor.x += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				backgroundColor.x += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
 				if (backgroundColor.x > 1) backgroundColor.x = 1;
 				if (backgroundColor.x < 0) backgroundColor.x = 0;
 				break;
 			case 1:
-				backgroundColor.y += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				backgroundColor.y += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
 				if (backgroundColor.y > 1) backgroundColor.y = 1;
 				if (backgroundColor.y < 0) backgroundColor.y = 0;
 				break;
 			case 2:
-				backgroundColor.z += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				backgroundColor.z += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
 				if (backgroundColor.z > 1) backgroundColor.z = 1;
 				if (backgroundColor.z < 0) backgroundColor.z = 0;
 				break;
 			case 3:
-				backgroundColor.w += deltaTime * (rand() % 10 - 4.5) / 2.f;
+				backgroundColor.w += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
 				if (backgroundColor.w > 1) backgroundColor.w = 1;
 				if (backgroundColor.w < 0) backgroundColor.w = 0;
 				break;
@@ -449,20 +449,28 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		std::string string = "Camera #" + std::to_string(selectedCamera);
 		ImGui::SeparatorText(string.c_str());
 
-		XMFLOAT3 position = cameras[selectedCamera].get()->GetTransform().GetPosition();
-		ImGui::DragFloat3("Position", &position.x, 0.005f, -100.0f, 100.0f, "%.3f");
+		ImVec4 detailsColor = ImVec4(1, 1, 1, 1);
 
-		XMFLOAT3 rotation = cameras[selectedCamera].get()->GetTransform().GetPitchYawRoll();
-		ImGui::DragFloat3("Rotation (Radians)", &rotation.x, 0.005f, -5.0f, 5.0f, "%.3f");
+		ImGui::TextColored(detailsColor, "Camera Details:");
+		{
+			XMFLOAT3 position = cameras[selectedCamera].get()->GetTransform().GetPosition();
+			ImGui::TextColored(detailsColor, "	Position: %0.2f, %0.2f, %0.2f", position.x, position.y, position.z);
 
-		float fov = cameras[selectedCamera].get()->GetFOV();
-		ImGui::DragFloat("FOV", &fov, 0.005f, 45.0f, 90.0f, "%.3f");
+			XMFLOAT3 rotation = cameras[selectedCamera].get()->GetTransform().GetPitchYawRoll();
+			ImGui::TextColored(detailsColor, "	Rotation (Radians): %0.2f, %0.2f, %0.2f", rotation.x, rotation.y, rotation.z);
 
+			float fov = cameras[selectedCamera].get()->GetFOV();
+			ImGui::TextColored(detailsColor, "	FOV: %0.2f", fov);
+		}
+
+		ImGui::Spacing();
+		ImGui::Spacing();
 
 		if (ImGui::Button("Change To Previous Camera"))
 		{
 			selectedCamera = (selectedCamera - 1) % cameras.size();
 		}
+		ImGui::SameLine();
 
 		if (ImGui::Button("Change To Next Camera"))
 		{

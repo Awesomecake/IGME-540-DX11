@@ -23,6 +23,7 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 
 void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<SimplePixelShader> pixelShader, std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<Camera> camera)
 {
+	//Set Shaders and Load Data
 	vertexShader->SetShader();
 	pixelShader->SetShader();
 
@@ -33,14 +34,10 @@ void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::
 
 	vertexShader->CopyAllBufferData();
 
+	//Load Buffers
+
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	// Set buffers in the input assembler (IA) stage
-			//  - Do this ONCE PER OBJECT, since each object may have different geometry
-			//  - For this demo, this step *could* simply be done once during Init()
-			//  - However, this needs to be done between EACH DrawIndexed() call
-			//     when drawing different geometry, so it's here as an example
-	mesh.get()->GetVertexBuffer().Get();
 
 	context->IASetVertexBuffers(0, 1, mesh.get()->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 	context->IASetIndexBuffer(mesh.get()->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
