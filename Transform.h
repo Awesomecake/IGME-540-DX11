@@ -15,6 +15,7 @@ private:
 
 public: 
 	Transform();
+	Transform(DirectX::XMFLOAT3 pos);
 	~Transform();
 
 	void SetPosition(float x, float y, float z);

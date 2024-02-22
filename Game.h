@@ -5,6 +5,8 @@
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include "Mesh.h"
 #include "GameEntity.h"
+#include "Camera.h"
+
 #include <memory>
 #include <vector>
 
@@ -39,6 +41,10 @@ public:
 	std::shared_ptr<Mesh> complexShape;
 
 	std::vector<GameEntity> gameEntities;
+
+	//Camera
+	std::vector<std::shared_ptr<Camera>> cameras;
+	int selectedCamera = 0;
 
 private:
 

@@ -118,6 +118,10 @@ void Game::Init()
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
 	//ImGui::StyleColorsClassic();
+
+	cameras = std::vector<std::shared_ptr<Camera>>();
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, XMFLOAT3(0.5, 0, -1)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, XMFLOAT3(-0.5, 0, -1)));
 }
 
 // --------------------------------------------------------
@@ -281,6 +285,11 @@ void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
+
+	for (size_t i = 0; i < cameras.size(); i++)
+	{
+		cameras[i].get()->UpdateProjectionMatrix((float)this->windowWidth / this->windowHeight);
+	}
 }
 
 // --------------------------------------------------------
@@ -338,6 +347,17 @@ void Game::Update(float deltaTime, float totalTime)
 		gameEntities[4].GetTransform().SetRotation(rot);
 	}
 
+	if (Input::GetInstance().KeyDown('1'))
+	{
+		selectedCamera = 0;
+	}
+	if (Input::GetInstance().KeyDown('2'))
+	{
+		selectedCamera = 1;
+	}
+
+
+	cameras[selectedCamera].get()->Update(deltaTime);
 	ImGuiUpdate(deltaTime, totalTime);
 	BuildUI(deltaTime, totalTime);
 }
@@ -361,7 +381,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	for(GameEntity entity : gameEntities)
 	{
-		entity.Draw(context, constBuffer);
+		entity.Draw(context, constBuffer,cameras[selectedCamera]);
 	}
 
 

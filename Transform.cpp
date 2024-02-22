@@ -1,14 +1,16 @@
 #include "Transform.h"
 
-Transform::Transform()
+Transform::Transform() : position(0,0,0), rotation(0,0,0), scale(1,1,1)
 {
 	DirectX::XMStoreFloat4x4(&worldMatrix, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&worldInverseTransposeMatrix, DirectX::XMMatrixIdentity());
-	position = DirectX::XMFLOAT3(0, 0, 0);
-	rotation = DirectX::XMFLOAT3(0, 0, 0);
-	scale = DirectX::XMFLOAT3(1, 1, 1);
 
 	isDirty = false;
+}
+
+Transform::Transform(DirectX::XMFLOAT3 pos) : Transform() 
+{ 
+	position = pos;
 }
 
 Transform::~Transform()
