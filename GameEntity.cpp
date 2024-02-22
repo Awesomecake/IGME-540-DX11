@@ -21,23 +21,17 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 	return mesh;
 }
 
-void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11Buffer> constBuffer, std::shared_ptr<Camera> camera)
+void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<SimplePixelShader> pixelShader, std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<Camera> camera)
 {
-	VertexShaderData vsData;
-	vsData.colorTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	vsData.worldMatrix = transform.GetWorldMatrix();
-	vsData.viewMatrix = camera.get()->GetViewMatrix();
-	vsData.projMatrix = camera.get()->GetProjectionMatrix();
+	vertexShader->SetShader();
+	pixelShader->SetShader();
 
-	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-	context->Map(constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-	memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
-	context->Unmap(constBuffer.Get(), 0);
+	vertexShader->SetFloat4("colorTint", DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+	vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
+	vertexShader->SetMatrix4x4("view", camera.get()->GetViewMatrix());
+	vertexShader->SetMatrix4x4("projection", camera.get()->GetProjectionMatrix());
 
-	context->VSSetConstantBuffers(
-		0, // Which slot (register) to bind the buffer to?
-		1, // How many are we setting right now?
-		constBuffer.GetAddressOf()); // Array of buffers (or address of just one)
+	vertexShader->CopyAllBufferData();
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;

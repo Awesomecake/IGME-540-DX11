@@ -9,7 +9,8 @@ Camera::Camera(float aspect, float _fov, XMFLOAT3 position) : transform(position
 
 Camera::~Camera()
 {
-
+	UpdateProjectionMatrix(16.f/9);
+	UpdateViewMatrix();
 }
 
 XMFLOAT4X4 Camera::GetViewMatrix()

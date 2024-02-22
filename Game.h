@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "GameEntity.h"
 #include "Camera.h"
+#include "SimpleShader.h"
 
 #include <memory>
 #include <vector>
@@ -32,9 +33,6 @@ public:
 	bool randomizeColorOffset = false;
 	DirectX::XMFLOAT4 backgroundColor = DirectX::XMFLOAT4(0.25, 0.0f, 0.25f, 1.0f);
 
-	//Constant Buffer
-	Microsoft::WRL::ComPtr<ID3D11Buffer> constBuffer;
-
 	//Meshes
 	std::shared_ptr<Mesh> triangle;
 	std::shared_ptr<Mesh> trapezoid;
@@ -52,10 +50,7 @@ private:
 	void LoadShaders(); 
 	void CreateGeometry();
 	
-	// Shaders and shader-related constructs
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
-
+	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimpleVertexShader> vertexShader;
 };
 
