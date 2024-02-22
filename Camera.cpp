@@ -1,7 +1,7 @@
 #include "Camera.h"
 using namespace DirectX;
 
-Camera::Camera(float aspect, XMFLOAT3 position) : transform(position)
+Camera::Camera(float aspect, float _fov, XMFLOAT3 position) : transform(position), fov(_fov)
 {
 	UpdateProjectionMatrix(aspect);
 	UpdateViewMatrix();
@@ -21,6 +21,17 @@ XMFLOAT4X4 Camera::GetProjectionMatrix()
 {
 	return projMatrix;
 }
+
+Transform Camera::GetTransform()
+{
+	return transform;
+}
+
+float Camera::GetFOV()
+{
+	return fov;
+}
+
 
 void Camera::UpdateProjectionMatrix(float aspectRatio)
 {

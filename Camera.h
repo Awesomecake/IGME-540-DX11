@@ -17,11 +17,13 @@ private:
 	float mouseSensitivity = 0.005;
 
 public:
-	Camera(float aspect, DirectX::XMFLOAT3 position);
+	Camera(float aspect, float _fov, DirectX::XMFLOAT3 position);
 	~Camera();
 
 	DirectX::XMFLOAT4X4 GetViewMatrix();
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
+	Transform GetTransform();
+	float GetFOV();
 
 	void UpdateProjectionMatrix(float aspectRatio);
 	void UpdateViewMatrix();

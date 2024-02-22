@@ -120,8 +120,11 @@ void Game::Init()
 	//ImGui::StyleColorsClassic();
 
 	cameras = std::vector<std::shared_ptr<Camera>>();
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, XMFLOAT3(0.5, 0, -1)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, XMFLOAT3(-0.5, 0, -1)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0.5, 0, -1)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(-0.5, 0, -1)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0, 0.5, -1)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(0, -0.5, -1)));
+
 }
 
 // --------------------------------------------------------
@@ -527,6 +530,35 @@ void Game::BuildUI(float deltaTime, float totalTime)
 				ImGui::TreePop();
 			}
 		}
+
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("Cameras"))
+	{
+		std::string string = "Camera #" + std::to_string(selectedCamera);
+		ImGui::SeparatorText(string.c_str());
+
+		XMFLOAT3 position = cameras[selectedCamera].get()->GetTransform().GetPosition();
+		ImGui::DragFloat3("Position", &position.x, 0.005f, -100.0f, 100.0f, "%.3f");
+
+		XMFLOAT3 rotation = cameras[selectedCamera].get()->GetTransform().GetPitchYawRoll();
+		ImGui::DragFloat3("Rotation (Radians)", &rotation.x, 0.005f, -5.0f, 5.0f, "%.3f");
+
+		float fov = cameras[selectedCamera].get()->GetFOV();
+		ImGui::DragFloat("FOV", &fov, 0.005f, 45.0f, 90.0f, "%.3f");
+
+
+		if (ImGui::Button("Change To Previous Camera"))
+		{
+			selectedCamera = (selectedCamera - 1) % cameras.size();
+		}
+
+		if (ImGui::Button("Change To Next Camera"))
+		{
+			selectedCamera = (selectedCamera + 1) % cameras.size();
+		}
+
 
 		ImGui::TreePop();
 	}
