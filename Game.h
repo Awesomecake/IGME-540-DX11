@@ -3,10 +3,12 @@
 #include "DXCore.h"
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
+
 #include "Mesh.h"
 #include "GameEntity.h"
 #include "Camera.h"
 #include "SimpleShader.h"
+#include "Material.h"
 
 #include <memory>
 #include <vector>
@@ -39,6 +41,11 @@ public:
 	std::shared_ptr<Mesh> complexShape;
 
 	std::vector<GameEntity> gameEntities;
+
+	//Materials
+	std::shared_ptr<Material> mat1;
+	std::shared_ptr<Material> mat2;
+	std::shared_ptr<Material> mat3;
 
 	//Camera
 	std::vector<std::shared_ptr<Camera>> cameras;

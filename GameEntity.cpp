@@ -1,9 +1,9 @@
 #include "GameEntity.h"
-#include "BufferStructs.h"
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> refMesh)
+GameEntity::GameEntity(std::shared_ptr<Mesh> refMesh, std::shared_ptr<Material> _material)
 {
 	mesh = refMesh;
+	material = _material;
 }
 
 GameEntity::~GameEntity()
@@ -21,18 +21,18 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 	return mesh;
 }
 
-void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<SimplePixelShader> pixelShader, std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<Camera> camera)
+void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
 {
 	//Set Shaders and Load Data
-	vertexShader->SetShader();
-	pixelShader->SetShader();
+	material->vertexShader->SetShader();
+	material->pixelShader->SetShader();
 
-	vertexShader->SetFloat4("colorTint", DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
-	vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
-	vertexShader->SetMatrix4x4("view", camera.get()->GetViewMatrix());
-	vertexShader->SetMatrix4x4("projection", camera.get()->GetProjectionMatrix());
+	material->vertexShader->SetFloat4("colorTint", material->colorTint);
+	material->vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
+	material->vertexShader->SetMatrix4x4("view", camera.get()->GetViewMatrix());
+	material->vertexShader->SetMatrix4x4("projection", camera.get()->GetProjectionMatrix());
 
-	vertexShader->CopyAllBufferData();
+	material->vertexShader->CopyAllBufferData();
 
 	//Load Buffers
 

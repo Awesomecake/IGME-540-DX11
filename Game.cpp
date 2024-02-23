@@ -3,7 +3,6 @@
 #include "Input.h"
 #include "PathHelpers.h"
 #include "Mesh.h"
-#include "BufferStructs.h"
 #include <string>
 
 #include "ImGui/imgui.h"
@@ -71,6 +70,11 @@ void Game::Init()
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
+
+	mat1 = std::make_shared<Material>(XMFLOAT4(1, 0, 0, 1), pixelShader, vertexShader);
+	mat2 = std::make_shared<Material>(XMFLOAT4(0, 1, 0, 1), pixelShader, vertexShader);
+	mat3 = std::make_shared<Material>(XMFLOAT4(0, 0, 1, 1), pixelShader, vertexShader);
+
 	CreateGeometry();
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -175,12 +179,12 @@ void Game::CreateGeometry()
 	unsigned int shapeIndices[] = {1,0,2,0,1,3,0,3,5,2,0,4};
 	complexShape = std::make_shared<Mesh>(shapeVertices, 6, shapeIndices, 12, device);
 
-	gameEntities.push_back(GameEntity(triangle));
-	gameEntities.push_back(GameEntity(trapezoid));
-	gameEntities.push_back(GameEntity(complexShape));
-	gameEntities.push_back(GameEntity(complexShape));
-	gameEntities.push_back(GameEntity(triangle));
-	gameEntities.push_back(GameEntity(trapezoid));
+	gameEntities.push_back(GameEntity(triangle,mat1));
+	gameEntities.push_back(GameEntity(trapezoid,mat2));
+	gameEntities.push_back(GameEntity(complexShape,mat3));
+	gameEntities.push_back(GameEntity(complexShape,mat1));
+	gameEntities.push_back(GameEntity(triangle,mat2));
+	gameEntities.push_back(GameEntity(trapezoid,mat3));
 
 	gameEntities[0].GetTransform().SetPosition(-0.5, -0.5, 0);
 	gameEntities[1].GetTransform().SetPosition(0.5, 0.5, 0);
@@ -294,7 +298,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	for(GameEntity entity : gameEntities)
 	{
-		entity.Draw(context, pixelShader,vertexShader,cameras[selectedCamera]);
+		entity.Draw(context, cameras[selectedCamera]);
 	}
 
 

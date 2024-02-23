@@ -3,6 +3,8 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "SimpleShader.h"
+#include "Material.h"
+
 #include <memory>
 
 class GameEntity
@@ -10,13 +12,14 @@ class GameEntity
 private:
 	Transform transform;
 	std::shared_ptr<Mesh> mesh;
+	std::shared_ptr<Material> material;
 
 public:
 
-	GameEntity(std::shared_ptr<Mesh> refMesh);
+	GameEntity(std::shared_ptr<Mesh> refMesh, std::shared_ptr<Material> _material);
 	~GameEntity();
 	std::shared_ptr<Mesh> GetMesh();
 	Transform& GetTransform();
 
-	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<SimplePixelShader> pixelShader, std::shared_ptr<SimpleVertexShader> vertexShader , std::shared_ptr<Camera> camera);
+	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera);
 };
