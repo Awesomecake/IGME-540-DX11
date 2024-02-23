@@ -9,8 +9,11 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 	unsigned int indexCount;
+
+	void CreateBuffers(Vertex* vertices, int vertexNum, unsigned int* indices, Microsoft::WRL::ComPtr<ID3D11Device> device);
 public:
 	Mesh();
+	Mesh(const wchar_t* filename, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	Mesh(Vertex vertices[], unsigned int vertexNum, unsigned int indices[], unsigned int indexNum, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	~Mesh();
 

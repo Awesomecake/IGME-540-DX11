@@ -90,10 +90,10 @@ void Game::Init()
 	//ImGui::StyleColorsClassic();
 
 	cameras = std::vector<std::shared_ptr<Camera>>();
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0.5, 0, -1)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(-0.5, 0, -1)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0, 0.5, -1)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(0, -0.5, -1)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0.5, 0, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(-0.5, 0, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0, 0.5, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(0, -0.5, -5)));
 
 }
 
@@ -118,77 +118,26 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
-	// Create some temporary variables to represent colors
-	// - Not necessary, just makes things more readable
-	XMFLOAT4 red	= XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	XMFLOAT4 green	= XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	XMFLOAT4 blue	= XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	cube = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str(), device);
+	cylinder = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str(), device);
+	helix = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str(), device);
+	sphere = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str(), device);
+	torus = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str(), device);
+	quad = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.obj").c_str(), device);
 
-	// Set up the vertices of the triangle we would like to draw
-	// - We're going to copy this array, exactly as it exists in CPU memory
-	//    over to a Direct3D-controlled data structure on the GPU (the vertex buffer)
-	// - Note: Since we don't have a camera or really any concept of
-	//    a "3d world" yet, we're simply describing positions within the
-	//    bounds of how the rasterizer sees our screen: [-1 to +1] on X and Y
-	// - This means (0,0) is at the very center of the screen.
-	// - These are known as "Normalized Device Coordinates" or "Homogeneous 
-	//    Screen Coords", which are ways to describe a position without
-	//    knowing the exact size (in pixels) of the image/window/etc.  
-	// - Long story short: Resizing the window also resizes the triangle,
-	//    since we're describing the triangle in terms of the window itself
-	Vertex triVertices[] =
-	{
-		{ XMFLOAT3(+0.0f, +0.2f, +0.0f), red },
-		{ XMFLOAT3(+0.2f, -0.2f, +0.0f), blue },
-		{ XMFLOAT3(-0.2f, -0.2f, +0.0f), green },
-		{ XMFLOAT3(1.f, 1.f, +0.0f), red }
-	};
+	gameEntities.push_back(GameEntity(cube,mat1));
+	gameEntities.push_back(GameEntity(cylinder,mat2));
+	gameEntities.push_back(GameEntity(helix,mat3));
+	gameEntities.push_back(GameEntity(sphere,mat1));
+	gameEntities.push_back(GameEntity(torus,mat2));
+	gameEntities.push_back(GameEntity(quad,mat3));
 
-	// Set up indices, which tell us which vertices to use and in which order
-	// - This is redundant for just 3 vertices, but will be more useful later
-	// - Indices are technically not required if the vertices are in the buffer 
-	//    in the correct order and each one will be used exactly once
-	// - But just to see how it's done...
-	unsigned int triIndices[] = {0, 1, 2};
-
-	triangle = std::make_shared<Mesh>(triVertices,4, triIndices, 3, device);
-
-	Vertex trapVertices[] =
-	{
-		{ XMFLOAT3(0.1f, +0.15f, +0.0f), green },
-		{ XMFLOAT3(0.2f, -0.15f, +0.0f), blue },
-		{ XMFLOAT3(-0.2f, -0.15f, +0.0f), blue },
-		{ XMFLOAT3(-0.1f, 0.15f, +0.0f), green }
-	};
-
-	unsigned int trapIndices[] = { 0, 1, 2, 0, 2, 3};
-	trapezoid = std::make_shared<Mesh>(trapVertices, 4, trapIndices,6, device);
-
-	Vertex shapeVertices[] =
-	{
-		{ XMFLOAT3(-0.0f, -0.0f, +0.0f), blue },
-		{ XMFLOAT3(-0.2f, -0.0f, +0.0f), blue },
-
-		{ XMFLOAT3(-0.1f, -0.1f, +0.0f), red },
-		{ XMFLOAT3(-0.1f, 0.1f, +0.0f), red },
-
-		{ XMFLOAT3(0.2f, -0.05f, +0.0f), red },
-		{ XMFLOAT3(0.2f, 0.05f, +0.0f), red }
-	};
-
-	unsigned int shapeIndices[] = {1,0,2,0,1,3,0,3,5,2,0,4};
-	complexShape = std::make_shared<Mesh>(shapeVertices, 6, shapeIndices, 12, device);
-
-	gameEntities.push_back(GameEntity(triangle,mat1));
-	gameEntities.push_back(GameEntity(trapezoid,mat2));
-	gameEntities.push_back(GameEntity(complexShape,mat3));
-	gameEntities.push_back(GameEntity(complexShape,mat1));
-	gameEntities.push_back(GameEntity(triangle,mat2));
-	gameEntities.push_back(GameEntity(trapezoid,mat3));
-
-	gameEntities[0].GetTransform().SetPosition(-0.5, -0.5, 0);
-	gameEntities[1].GetTransform().SetPosition(0.5, 0.5, 0);
-	gameEntities[5].GetTransform().SetPosition(-0.5, 0.5, 0);
+	gameEntities[0].GetTransform().SetPosition(-9, -3, 0);
+	gameEntities[1].GetTransform().SetPosition(-6, -3, 0);
+	gameEntities[2].GetTransform().SetPosition(-3, -3, 0);
+	gameEntities[3].GetTransform().SetPosition(-0, -3, 0);
+	gameEntities[4].GetTransform().SetPosition(3, -3, 0);
+	gameEntities[5].GetTransform().SetPosition(6, -3, 0);
 
 }
 
@@ -217,62 +166,6 @@ void Game::Update(float deltaTime, float totalTime)
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE))
 		Quit();
-
-	//Scaling Entity 0
-	{
-		XMFLOAT3 scale = gameEntities[0].GetTransform().GetScale();
-		scale.x = (float) abs(1.5 * cos(totalTime));
-		scale.y = (float) abs(1.5 * sin(totalTime));
-		gameEntities[0].GetTransform().SetScale(scale);
-	}
-
-	//Rotating Entity 1
-	{
-		XMFLOAT3 rot = gameEntities[1].GetTransform().GetPitchYawRoll();
-		rot.z = totalTime;
-		gameEntities[1].GetTransform().SetRotation(rot);
-	}
-
-	//Moving Entity 2
-	{
-		XMFLOAT3 pos = gameEntities[2].GetTransform().GetPosition();
-		pos.x = (float) (0.8 * cos(totalTime));
-		pos.y = (float) (0.8 * sin(totalTime));
-		gameEntities[2].GetTransform().SetPosition(pos);
-	}
-
-
-	//Moving & rotating Entity 3
-	{
-		XMFLOAT3 pos = gameEntities[3].GetTransform().GetPosition();
-		pos.x = (float) (-0.8 * cos(totalTime));
-		gameEntities[3].GetTransform().SetPosition(pos);
-
-		XMFLOAT3 rot = gameEntities[3].GetTransform().GetPitchYawRoll();
-		rot.z = totalTime;
-		gameEntities[3].GetTransform().SetRotation(rot);
-	}
-
-	//Moving & rotating Entity 4
-	{
-		XMFLOAT3 pos = gameEntities[4].GetTransform().GetPosition();
-		pos.y = (float) (-0.8 * sin(totalTime));
-		gameEntities[4].GetTransform().SetPosition(pos);
-
-		XMFLOAT3 rot = gameEntities[4].GetTransform().GetPitchYawRoll();
-		rot.z = totalTime;
-		gameEntities[4].GetTransform().SetRotation(rot);
-	}
-
-	if (Input::GetInstance().KeyDown('1'))
-	{
-		selectedCamera = 0;
-	}
-	if (Input::GetInstance().KeyDown('2'))
-	{
-		selectedCamera = 1;
-	}
-
 
 	cameras[selectedCamera].get()->Update(deltaTime);
 	ImGuiUpdate(deltaTime, totalTime);
@@ -414,9 +307,9 @@ void Game::BuildUI(float deltaTime, float totalTime)
 
 	if (ImGui::TreeNode("Meshes"))
 	{
-		ImGui::Text("Mesh 0: %u triangle(s)", triangle.get()->GetIndexCount()/3);
-		ImGui::Text("Mesh 1: %u triangle(s)", trapezoid.get()->GetIndexCount()/3);
-		ImGui::Text("Mesh 2: %u triangle(s)", complexShape.get()->GetIndexCount()/3);
+		ImGui::Text("Mesh 0: %u triangle(s)", cube.get()->GetIndexCount()/3);
+		ImGui::Text("Mesh 1: %u triangle(s)", cylinder.get()->GetIndexCount()/3);
+		ImGui::Text("Mesh 2: %u triangle(s)", helix.get()->GetIndexCount()/3);
 
 		ImGui::TreePop();
 		ImGui::Spacing();

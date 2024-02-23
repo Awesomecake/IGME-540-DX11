@@ -36,7 +36,7 @@ float Camera::GetFOV()
 
 void Camera::UpdateProjectionMatrix(float aspectRatio)
 {
-	XMMATRIX matrix = XMMatrixPerspectiveFovLH(fov, aspectRatio, 0.1f, 10);
+	XMMATRIX matrix = XMMatrixPerspectiveFovLH(fov, aspectRatio, 0.1f, 30);
 	XMStoreFloat4x4(&projMatrix, matrix);
 }
 

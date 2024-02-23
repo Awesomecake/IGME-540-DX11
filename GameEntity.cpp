@@ -24,15 +24,23 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
 {
 	//Set Shaders and Load Data
-	material->vertexShader->SetShader();
-	material->pixelShader->SetShader();
+	{
+		material->pixelShader->SetShader();
 
-	material->vertexShader->SetFloat4("colorTint", material->colorTint);
-	material->vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
-	material->vertexShader->SetMatrix4x4("view", camera.get()->GetViewMatrix());
-	material->vertexShader->SetMatrix4x4("projection", camera.get()->GetProjectionMatrix());
+		material->pixelShader->SetFloat4("colorTint", material->colorTint);
 
-	material->vertexShader->CopyAllBufferData();
+		material->pixelShader->CopyAllBufferData();
+	}
+
+	{
+		material->vertexShader->SetShader();
+
+		material->vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
+		material->vertexShader->SetMatrix4x4("view", camera.get()->GetViewMatrix());
+		material->vertexShader->SetMatrix4x4("projection", camera.get()->GetProjectionMatrix());
+
+		material->vertexShader->CopyAllBufferData();
+	}
 
 	//Load Buffers
 

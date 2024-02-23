@@ -36,9 +36,12 @@ public:
 	DirectX::XMFLOAT4 backgroundColor = DirectX::XMFLOAT4(0.25, 0.0f, 0.25f, 1.0f);
 
 	//Meshes
-	std::shared_ptr<Mesh> triangle;
-	std::shared_ptr<Mesh> trapezoid;
-	std::shared_ptr<Mesh> complexShape;
+	std::shared_ptr<Mesh> cube;
+	std::shared_ptr<Mesh> cylinder;
+	std::shared_ptr<Mesh> helix;
+	std::shared_ptr<Mesh> sphere;
+	std::shared_ptr<Mesh> torus;
+	std::shared_ptr<Mesh> quad;
 
 	std::vector<GameEntity> gameEntities;
 
