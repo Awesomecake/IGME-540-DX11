@@ -42,6 +42,26 @@ float4 flashlight(float4 screenPosition)
     return float4(startingDarkness, startingDarkness, startingDarkness, 1);
 }
 
+float4 flashlight2(float4 screenPosition)
+{
+
+    float startingDarkness = 0.1;
+
+    float xDiff = (screenPosition.x - mousePos.x);
+    float yDiff = (screenPosition.y - mousePos.y);
+
+    float range = 100;
+    float dist = length(float2(xDiff, yDiff));
+
+    if (dist < range)
+    {
+        float brightness = (1 - dist / (range)) * (1 - startingDarkness) + startingDarkness;
+        return float4(brightness, brightness, brightness, 1);
+    }
+
+    return float4(startingDarkness, startingDarkness, startingDarkness, 1);
+}
+
 float hash(float n)
 {
     return frac(sin(n) * 43758.5453);
@@ -72,7 +92,9 @@ float noise(float3 x)
 // - Named "main" because that's the default the shader compiler looks for
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
-{	    
-    float noiseData = noise(float3(input.uv*50, totalTime));
-    return colorTint * float4(noiseData.xxx, 1);
+{
+    //float xDiff = (input.uv.x + input.uv.y * (cos(totalTime/5)+1.2)*10) % 1;
+
+    //return colorTint * float4(xDiff.xxx,1);
+    return colorTint * flashlight2(input.screenPosition);
 }
