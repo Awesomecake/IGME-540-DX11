@@ -61,6 +61,7 @@ private:
 	void CreateGeometry();
 	
 	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimplePixelShader> pixelShader2;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 };
 

@@ -21,5 +21,5 @@ public:
 	std::shared_ptr<Mesh> GetMesh();
 	Transform& GetTransform();
 
-	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera);
+	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, float totalTime);
 };

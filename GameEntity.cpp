@@ -21,13 +21,17 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 	return mesh;
 }
 
-void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
+void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, float totalTime)
 {
+	DirectX::XMFLOAT2 mousePos = DirectX::XMFLOAT2(Input::GetInstance().GetMouseX(), Input::GetInstance().GetMouseY());
+
 	//Set Shaders and Load Data
 	{
 		material->pixelShader->SetShader();
 
+		material->pixelShader->SetFloat("totalTime", totalTime);
 		material->pixelShader->SetFloat4("colorTint", material->colorTint);
+		material->pixelShader->SetFloat2("mousePos", mousePos);
 
 		material->pixelShader->CopyAllBufferData();
 	}

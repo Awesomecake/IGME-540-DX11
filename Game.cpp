@@ -71,9 +71,9 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 
-	mat1 = std::make_shared<Material>(XMFLOAT4(1, 0, 0, 1), pixelShader, vertexShader);
-	mat2 = std::make_shared<Material>(XMFLOAT4(0, 1, 0, 1), pixelShader, vertexShader);
-	mat3 = std::make_shared<Material>(XMFLOAT4(0, 0, 1, 1), pixelShader, vertexShader);
+	mat1 = std::make_shared<Material>(XMFLOAT4(1, 0, 0, 1), pixelShader2, vertexShader);
+	mat2 = std::make_shared<Material>(XMFLOAT4(0, 1, 0, 1), pixelShader2, vertexShader);
+	mat3 = std::make_shared<Material>(XMFLOAT4(0, 0, 1, 1), pixelShader2, vertexShader);
 
 	CreateGeometry();
 
@@ -108,6 +108,7 @@ void Game::Init()
 void Game::LoadShaders()
 {
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader.cso").c_str());
+	pixelShader2 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader2.cso").c_str());
 	vertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader.cso").c_str());
 }
 
@@ -191,7 +192,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	for(GameEntity entity : gameEntities)
 	{
-		entity.Draw(context, cameras[selectedCamera]);
+		entity.Draw(context, cameras[selectedCamera], totalTime);
 	}
 
 
