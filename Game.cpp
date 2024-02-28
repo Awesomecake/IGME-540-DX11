@@ -90,10 +90,10 @@ void Game::Init()
 	//ImGui::StyleColorsClassic();
 
 	cameras = std::vector<std::shared_ptr<Camera>>();
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0.5, 0, -5)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(-0.5, 0, -5)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45, XMFLOAT3(0, 0.5, -5)));
-	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90, XMFLOAT3(0, -0.5, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45.f, XMFLOAT3(0.5, 0, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90.f, XMFLOAT3(-0.5, 0, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45.f, XMFLOAT3(0, 0.5, -5)));
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90.f, XMFLOAT3(0, -0.5, -5)));
 
 }
 

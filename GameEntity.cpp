@@ -23,7 +23,7 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 
 void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, float totalTime)
 {
-	DirectX::XMFLOAT2 mousePos = DirectX::XMFLOAT2(Input::GetInstance().GetMouseX(), Input::GetInstance().GetMouseY());
+	DirectX::XMFLOAT2 mousePos = DirectX::XMFLOAT2((float)Input::GetInstance().GetMouseX(), (float)Input::GetInstance().GetMouseY());
 
 	//Set Shaders and Load Data
 	{

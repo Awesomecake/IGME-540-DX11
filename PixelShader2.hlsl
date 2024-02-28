@@ -22,46 +22,6 @@ cbuffer ConstantBuffer : register(b0)
     float2 mousePos;
 }
 
-float4 flashlight(float4 screenPosition)
-{
-        
-    float startingDarkness = 0.1;
-    
-    float xDiff = screenPosition.x - mousePos.x;
-    float yDiff = screenPosition.y - mousePos.y;
-    
-    float range = 100;
-    float dist = length(float2(xDiff, yDiff));
-    
-    if (dist < range)
-    {
-        float brightness = (1 - dist / (range)) * (1 - startingDarkness) + startingDarkness;
-        return float4(brightness, brightness, brightness, 1);
-    }
-
-    return float4(startingDarkness, startingDarkness, startingDarkness, 1);
-}
-
-float4 flashlight2(float4 screenPosition)
-{
-
-    float startingDarkness = 0.1;
-
-    float xDiff = (screenPosition.x - mousePos.x);
-    float yDiff = (screenPosition.y - mousePos.y);
-
-    float range = 100;
-    float dist = length(float2(xDiff, yDiff));
-
-    if (dist < range)
-    {
-        float brightness = (1 - dist / (range)) * (1 - startingDarkness) + startingDarkness;
-        return float4(brightness, brightness, brightness, 1);
-    }
-
-    return float4(startingDarkness, startingDarkness, startingDarkness, 1);
-}
-
 float hash(float n)
 {
     return frac(sin(n) * 43758.5453);
@@ -93,8 +53,24 @@ float noise(float3 x)
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    float xDiff = (input.uv.x + input.uv.y * (cos(totalTime/5)+1.2)*10) % 1;
+    float uvShift = (input.uv.x + input.uv.y * (cos(totalTime/5)+1.2)*10) % 1;
+    
+    float startingDarkness = 0.1;
+    
+    float xDiff = input.screenPosition.x - mousePos.x;
+    float yDiff = input.screenPosition.y - mousePos.y;
+    
+    float range = 100;
+    float dist = length(float2(xDiff, yDiff));
+    
+    if (dist < range)
+    {
+        float brightness = (1 - dist / (range)) * (1 - startingDarkness) + startingDarkness;
+        return float4(brightness, brightness, brightness, 1);
+    }
+
+    return float4(startingDarkness, startingDarkness, startingDarkness, 1);
 
     //return colorTint * float4(xDiff.xxx,1);
-    return colorTint * flashlight2(input.screenPosition) * float4(xDiff.xxx, 1);
+    return colorTint * float4(startingDarkness, startingDarkness, startingDarkness, 1) * float4(uvShift.xxx, 1);
 }
