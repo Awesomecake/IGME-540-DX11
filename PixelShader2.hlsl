@@ -93,8 +93,8 @@ float noise(float3 x)
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    //float xDiff = (input.uv.x + input.uv.y * (cos(totalTime/5)+1.2)*10) % 1;
+    float xDiff = (input.uv.x + input.uv.y * (cos(totalTime/5)+1.2)*10) % 1;
 
     //return colorTint * float4(xDiff.xxx,1);
-    return colorTint * flashlight2(input.screenPosition);
+    return colorTint * flashlight2(input.screenPosition) * float4(xDiff.xxx, 1);
 }
