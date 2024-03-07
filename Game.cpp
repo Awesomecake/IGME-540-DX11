@@ -71,9 +71,9 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 
-	mat1 = std::make_shared<Material>(XMFLOAT4(1, 0, 0, 1), pixelShader2, vertexShader);
-	mat2 = std::make_shared<Material>(XMFLOAT4(0, 1, 0, 1), pixelShader2, vertexShader);
-	mat3 = std::make_shared<Material>(XMFLOAT4(0, 0, 1, 1), pixelShader2, vertexShader);
+	mat1 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.5);
+	mat2 = std::make_shared<Material>(XMFLOAT4(0, 1, 0,1), pixelShader, vertexShader,1);
+	mat3 = std::make_shared<Material>(XMFLOAT4(0, 0, 1,1), pixelShader, vertexShader,1);
 
 	CreateGeometry();
 
@@ -95,6 +95,42 @@ void Game::Init()
 	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45.f, XMFLOAT3(0, 0.5, -5)));
 	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90.f, XMFLOAT3(0, -0.5, -5)));
 
+	Light light = Light();
+	light.Type = LIGHT_TYPE_POINT;
+	light.Color = XMFLOAT3(1, 0, 0);
+	light.Position = XMFLOAT3(0, 0, 0);
+	light.Range = 10;
+	light.Intensity = 2;
+
+	lights = std::vector<Light>();
+	lights.push_back(light);
+
+	Light light2 = Light();
+	light2.Type = LIGHT_TYPE_POINT;
+	light2.Color = XMFLOAT3(0, 0, 1);
+	light2.Position = XMFLOAT3(0, 0, 5);
+	light2.Range = 10;
+	light2.Intensity = 2;
+
+	lights.push_back(light2);
+
+	Light light3 = Light();
+	light3.Direction = XMFLOAT3(0, 0, 1);
+	light3.Color = XMFLOAT3(0, 0, 1);
+
+	lights.push_back(light3);
+
+	Light light4 = light3;
+	light4.Direction = XMFLOAT3(-1, 0, 0);
+	light4.Color = XMFLOAT3(1, 1, 0);
+
+	lights.push_back(light4);
+
+	Light light5 = light3;
+	light5.Direction = XMFLOAT3(0, 0, -1);
+	light5.Color = XMFLOAT3(0, 1, 1);
+
+	lights.push_back(light5);
 }
 
 // --------------------------------------------------------
@@ -127,11 +163,11 @@ void Game::CreateGeometry()
 	quad = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.igme540obj").c_str(), device);
 
 	gameEntities.push_back(GameEntity(cube,mat1));
-	gameEntities.push_back(GameEntity(cylinder,mat2));
-	gameEntities.push_back(GameEntity(helix,mat3));
+	gameEntities.push_back(GameEntity(cylinder, mat1));
+	gameEntities.push_back(GameEntity(helix, mat1));
 	gameEntities.push_back(GameEntity(sphere,mat1));
-	gameEntities.push_back(GameEntity(torus,mat2));
-	gameEntities.push_back(GameEntity(quad,mat3));
+	gameEntities.push_back(GameEntity(torus, mat1));
+	gameEntities.push_back(GameEntity(quad, mat1));
 
 	gameEntities[0].GetTransform().SetPosition(-9, -3, 0);
 	gameEntities[1].GetTransform().SetPosition(-6, -3, 0);
@@ -192,7 +228,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	for(GameEntity entity : gameEntities)
 	{
-		entity.Draw(context, cameras[selectedCamera], totalTime);
+		entity.GetMaterial()->pixelShader->SetFloat3("ambient", ambientColor);
+		entity.Draw(context, cameras[selectedCamera], totalTime,lights);
 	}
 
 
@@ -375,6 +412,42 @@ void Game::BuildUI(float deltaTime, float totalTime)
 			selectedCamera = (selectedCamera + 1) % cameras.size();
 		}
 
+
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("Lights"))
+	{
+		for (int i = 0; i < lights.size(); i++)
+		{
+			std::string string = "Light #" + std::to_string(i+1) + " - ";
+
+			switch (lights[i].Type)
+			{
+			case LIGHT_TYPE_DIRECTIONAL:
+				string += "Directional";
+				break;
+			case LIGHT_TYPE_POINT:
+				string += "Point";
+				break;
+			case LIGHT_TYPE_SPOT:
+				string += "Spot";
+				break;
+			}
+
+			if (ImGui::TreeNode(string.data()))
+			{
+				XMFLOAT3 color = lights[i].Color;
+				ImGui::DragFloat3("Color", &color.x, 0.005f, 0.f, 1.0f, "%.01f");
+				lights[i].Color = color;
+
+				float intensity = lights[i].Intensity;
+				ImGui::DragFloat("Intensity", &intensity, 0.005f, 0.0f, 50.0f, "%.3f");
+				lights[i].Intensity = intensity;
+
+				ImGui::TreePop();
+			}
+		}
 
 		ImGui::TreePop();
 	}

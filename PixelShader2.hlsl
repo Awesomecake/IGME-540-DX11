@@ -1,23 +1,8 @@
-
-// Struct representing the data we expect to receive from earlier pipeline stages
-// - Should match the output of our corresponding vertex shader
-// - The name of the struct itself is unimportant
-// - The variable names don't have to match other shaders (just the semantics)
-// - Each variable must have a semantic, which defines its usage
-struct VertexToPixel
-{
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
-	float4 screenPosition	: SV_POSITION;
-    float2 uv				: TEXCOORD;
-};
+#include "GGP_Shader.hlsli"
 
 cbuffer ConstantBuffer : register(b0)
 {
-    float4 colorTint;
+    float4 surfaceColor;
     float totalTime;
     float2 mousePos;
 }
@@ -66,11 +51,9 @@ float4 main(VertexToPixel input) : SV_TARGET
     if (dist < range)
     {
         float brightness = (1 - dist / (range)) * (1 - startingDarkness) + startingDarkness;
-        return float4(brightness, brightness, brightness, 1);
+        return surfaceColor * float4(brightness, brightness, brightness, 1) * float4(uvShift.xxx, 1);
     }
 
-    return float4(startingDarkness, startingDarkness, startingDarkness, 1);
-
-    //return colorTint * float4(xDiff.xxx,1);
-    return colorTint * float4(startingDarkness, startingDarkness, startingDarkness, 1) * float4(uvShift.xxx, 1);
+    //return surfaceColor * float4(xDiff.xxx,1);
+    return surfaceColor * float4(startingDarkness, startingDarkness, startingDarkness, 1) * float4(uvShift.xxx, 1);
 }

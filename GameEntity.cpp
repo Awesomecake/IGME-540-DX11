@@ -21,7 +21,12 @@ std::shared_ptr<Mesh> GameEntity::GetMesh()
 	return mesh;
 }
 
-void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, float totalTime)
+std::shared_ptr<Material> GameEntity::GetMaterial()
+{
+	return material;
+}
+
+void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, float totalTime, std::vector<Light> lights)
 {
 	DirectX::XMFLOAT2 mousePos = DirectX::XMFLOAT2((float)Input::GetInstance().GetMouseX(), (float)Input::GetInstance().GetMouseY());
 
@@ -30,18 +35,25 @@ void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::
 		material->pixelShader->SetShader();
 
 		material->pixelShader->SetFloat("totalTime", totalTime);
-		material->pixelShader->SetFloat4("colorTint", material->colorTint);
+		material->pixelShader->SetFloat4("surfaceColor", material->surfaceColor);
+		
 		material->pixelShader->SetFloat2("mousePos", mousePos);
+
+		material->pixelShader->SetFloat("roughness", material->roughness);
+		material->pixelShader->SetFloat3("cameraPos", camera->GetTransform().GetPosition());
+
+		material->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 
 		material->pixelShader->CopyAllBufferData();
 	}
-
+	//worldInvTranspose
 	{
 		material->vertexShader->SetShader();
 
 		material->vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
-		material->vertexShader->SetMatrix4x4("view", camera.get()->GetViewMatrix());
-		material->vertexShader->SetMatrix4x4("projection", camera.get()->GetProjectionMatrix());
+		material->vertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
+		material->vertexShader->SetMatrix4x4("projection", camera->GetProjectionMatrix());
+		material->vertexShader->SetMatrix4x4("worldInvTranspose", transform.GetWorldInverseTransposeMatrix());
 
 		material->vertexShader->CopyAllBufferData();
 	}

@@ -1,24 +1,14 @@
-
-// Struct representing the data we expect to receive from earlier pipeline stages
-// - Should match the output of our corresponding vertex shader
-// - The name of the struct itself is unimportant
-// - The variable names don't have to match other shaders (just the semantics)
-// - Each variable must have a semantic, which defines its usage
-struct VertexToPixel
-{
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
-	float4 screenPosition	: SV_POSITION;
-    float2 uv				: TEXCOORD;
-};
+#include "GGP_Shader.hlsli"
 
 cbuffer ConstantBuffer : register(b0)
 {
-    float4 colorTint;
+    float4 surfaceColor;
     float totalTime;
+    
+    float3 ambient;
+    Light lights[5];
+    float roughness;
+    float3 cameraPos;
 }
 
 // --------------------------------------------------------
@@ -31,6 +21,27 @@ cbuffer ConstantBuffer : register(b0)
 // - Named "main" because that's the default the shader compiler looks for
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
-{
-    return float4(input.uv, 0, 1);
+{    
+    input.normal = normalize(input.normal);
+    
+    float3 light;
+    
+    for (int i = 0; i < 5; i++)
+    {
+        switch (lights[i].Type)
+        {
+            case LIGHT_TYPE_DIRECTIONAL:
+                light += DirectionalLight(lights[i],input, surfaceColor,cameraPos,roughness);
+                break;
+            case LIGHT_TYPE_POINT:
+                light += PointLight(lights[i],input,surfaceColor,cameraPos,roughness);
+                break;
+            case LIGHT_TYPE_SPOT:
+                break;
+        }
+    }
+    
+
+    
+    return surfaceColor * float4(light, 1);
 }

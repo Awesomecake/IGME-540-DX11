@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "SimpleShader.h"
 #include "Material.h"
+#include "Lights.h"
 
 #include <memory>
 #include <vector>
@@ -53,6 +54,10 @@ public:
 	//Camera
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int selectedCamera = 0;
+
+	DirectX::XMFLOAT3 ambientColor = { 0.1,0.1,0.1};
+
+	std::vector<Light> lights = std::vector<Light>();
 
 private:
 
