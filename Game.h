@@ -55,7 +55,7 @@ public:
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int selectedCamera = 0;
 
-	DirectX::XMFLOAT3 ambientColor = { 0.1,0.1,0.1};
+	DirectX::XMFLOAT3 ambientColor = { 0.1f,0.1f,0.1f};
 
 	std::vector<Light> lights = std::vector<Light>();
 

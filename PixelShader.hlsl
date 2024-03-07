@@ -31,10 +31,10 @@ float4 main(VertexToPixel input) : SV_TARGET
         switch (lights[i].Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                light += DirectionalLight(lights[i],input, surfaceColor,cameraPos,roughness);
+                light += DirectionalLight(lights[i],input, surfaceColor.xyz,cameraPos,roughness);
                 break;
             case LIGHT_TYPE_POINT:
-                light += PointLight(lights[i],input,surfaceColor,cameraPos,roughness);
+                light += PointLight(lights[i],input,surfaceColor.xyz,cameraPos,roughness);
                 break;
             case LIGHT_TYPE_SPOT:
                 break;
