@@ -11,6 +11,9 @@ cbuffer ConstantBuffer : register(b0)
     float3 cameraPos;
 }
 
+Texture2D SurfaceTexture : register(t0); // "t" registers for textures
+SamplerState BasicSampler : register(s0); // "s" registers for samplers
+
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
 // 
@@ -41,7 +44,7 @@ float4 main(VertexToPixel input) : SV_TARGET
         }
     }
     
-
+    float3 textureColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb;
     
-    return surfaceColor * float4(light, 1);
+    return surfaceColor * float4(textureColor * light, 1);
 }

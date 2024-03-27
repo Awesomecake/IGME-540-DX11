@@ -49,7 +49,6 @@ public:
 	//Materials
 	std::shared_ptr<Material> mat1;
 	std::shared_ptr<Material> mat2;
-	std::shared_ptr<Material> mat3;
 
 	//Camera
 	std::vector<std::shared_ptr<Camera>> cameras;
@@ -58,6 +57,10 @@ public:
 	DirectX::XMFLOAT3 ambientColor = { 0.1f,0.1f,0.1f};
 
 	std::vector<Light> lights = std::vector<Light>();
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brickShaderResourceView;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> plankShaderResourceView;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
 private:
 

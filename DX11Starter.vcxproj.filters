@@ -152,5 +152,6 @@
     <None Include="GGP_Shader.hlsli">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

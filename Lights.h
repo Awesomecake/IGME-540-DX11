@@ -6,7 +6,7 @@
 #define LIGHT_TYPE_SPOT 2
 
 struct Light {
-	Light() : Type(LIGHT_TYPE_DIRECTIONAL), Direction(1,0,0), Range(10), Position(0,0,0), Intensity(1), Color(1, 1, 1) { }
+	Light() : Type(LIGHT_TYPE_DIRECTIONAL), Direction(1,0,0), Range(10), Position(0,0,0), Intensity(1), Color(1, 1, 1), Padding(0,0,0), SpotFalloff(0) { }
 
 	int Type;
 	DirectX::XMFLOAT3 Direction;

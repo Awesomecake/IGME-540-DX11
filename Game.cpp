@@ -4,6 +4,7 @@
 #include "PathHelpers.h"
 #include "Mesh.h"
 #include <string>
+#include "WICTextureLoader.h"
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
@@ -71,9 +72,28 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	samplerDesc.MaxAnisotropy = 16;		// Can make this a "Graphics Setting"
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
+
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures/brick_wall/brick_wall_09_diff_4k.jpg").c_str(), nullptr, brickShaderResourceView.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures/plank_flooring/plank_flooring_03_diff_4k.jpg").c_str(), nullptr, plankShaderResourceView.GetAddressOf());
+
 	mat1 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.5f);
-	mat2 = std::make_shared<Material>(XMFLOAT4(0, 1, 0,1), pixelShader, vertexShader,1.f);
-	mat3 = std::make_shared<Material>(XMFLOAT4(0, 0, 1,1), pixelShader, vertexShader,1.f);
+	mat1->textureSRVs.insert({ "SurfaceTexture", brickShaderResourceView});
+	mat1->samplers.insert({ "BasicSampler",samplerState });
+
+	mat2 = std::make_shared<Material>(XMFLOAT4(0.5, 1, 0.5,1), pixelShader, vertexShader,1.f);
+	mat2->textureSRVs.insert({ "SurfaceTexture", plankShaderResourceView });
+	mat2->samplers.insert({ "BasicSampler",samplerState });
+
+	mat1->PrepareMaterial();
+	mat2->PrepareMaterial();
 
 	CreateGeometry();
 
@@ -165,9 +185,9 @@ void Game::CreateGeometry()
 	gameEntities.push_back(GameEntity(cube,mat1));
 	gameEntities.push_back(GameEntity(cylinder, mat1));
 	gameEntities.push_back(GameEntity(helix, mat1));
-	gameEntities.push_back(GameEntity(sphere,mat1));
-	gameEntities.push_back(GameEntity(torus, mat1));
-	gameEntities.push_back(GameEntity(quad, mat1));
+	gameEntities.push_back(GameEntity(sphere,mat2));
+	gameEntities.push_back(GameEntity(torus, mat2));
+	gameEntities.push_back(GameEntity(quad, mat2));
 
 	gameEntities[0].GetTransform().SetPosition(-9, -3, 0);
 	gameEntities[1].GetTransform().SetPosition(-6, -3, 0);
