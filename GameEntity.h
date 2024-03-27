@@ -23,5 +23,5 @@ public:
 	Transform& GetTransform();
 	std::shared_ptr<Material> GetMaterial();
 
-	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, float totalTime, std::vector<Light> lights);
+	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, std::vector<Light> lights);
 };

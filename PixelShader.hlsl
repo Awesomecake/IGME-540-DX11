@@ -4,6 +4,7 @@ cbuffer ConstantBuffer : register(b0)
 {
     float4 surfaceColor;
     float totalTime;
+    float2 uvOffset;
     
     float3 ambient;
     Light lights[5];
@@ -44,7 +45,7 @@ float4 main(VertexToPixel input) : SV_TARGET
         }
     }
     
-    float3 textureColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb;
-    
+    float3 textureColor = SurfaceTexture.Sample(BasicSampler, input.uv+uvOffset).rgb;
+        
     return surfaceColor * float4(textureColor * light, 1);
 }

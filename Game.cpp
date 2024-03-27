@@ -249,7 +249,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	for(GameEntity entity : gameEntities)
 	{
 		entity.GetMaterial()->pixelShader->SetFloat3("ambient", ambientColor);
-		entity.Draw(context, cameras[selectedCamera], totalTime,lights);
+		entity.GetMaterial()->pixelShader->SetFloat("totalTime", totalTime);
+		entity.GetMaterial()->pixelShader->SetFloat2("uvOffset", uvOffset);
+		entity.Draw(context, cameras[selectedCamera],lights);
 	}
 
 
@@ -468,6 +470,12 @@ void Game::BuildUI(float deltaTime, float totalTime)
 				ImGui::TreePop();
 			}
 		}
+
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Textures"))
+	{
+		ImGui::DragFloat2("UV Offset", &uvOffset.x, 0.005f, -10.f, 10.0f, "%.01f");
 
 		ImGui::TreePop();
 	}

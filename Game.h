@@ -62,6 +62,8 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> plankShaderResourceView;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
+	DirectX::XMFLOAT2 uvOffset;
+
 private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
