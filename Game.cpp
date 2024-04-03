@@ -81,21 +81,25 @@ void Game::Init()
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
 
-	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures/brick_wall/brick_wall_09_diff_4k.jpg").c_str(), nullptr, brickShaderResourceView.GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures/plank_flooring/plank_flooring_03_diff_4k.jpg").c_str(), nullptr, plankShaderResourceView.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cobblestone.png").c_str(), nullptr, cobblestoneShaderResourceView.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cobblestone_normals.png").c_str(), nullptr, cobblestone_normalsShaderResourceView.GetAddressOf());
 
-	mat1 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.5f);
-	mat1->textureSRVs.insert({ "SurfaceTexture", brickShaderResourceView});
+	mat1 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.1f);
+	mat1->textureSRVs.insert({ "SurfaceTexture", cobblestoneShaderResourceView});
+	mat1->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
 	mat1->samplers.insert({ "BasicSampler",samplerState });
 
 	mat2 = std::make_shared<Material>(XMFLOAT4(0.5, 1, 0.5,1), pixelShader, vertexShader,1.f);
-	mat2->textureSRVs.insert({ "SurfaceTexture", plankShaderResourceView });
+	mat2->textureSRVs.insert({ "SurfaceTexture", cobblestoneShaderResourceView });
+	mat2->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
 	mat2->samplers.insert({ "BasicSampler",samplerState });
 
 	mat1->PrepareMaterial();
 	mat2->PrepareMaterial();
 
 	CreateGeometry();
+
+	sky = std::make_shared<Sky>(cube, samplerState, device, context, FixPath(L"../../Assets/Skies/Planet/").c_str());
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -239,7 +243,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erases what's on the screen)
-		float bgColor[4] = { backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w };
+		float bgColor[4] = { ambientColor.x, ambientColor.y, ambientColor.z, 1};
 		context->ClearRenderTargetView(backBufferRTV.Get(), bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
@@ -254,6 +258,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		entity.Draw(context, cameras[selectedCamera],lights);
 	}
 
+	sky->ambient = ambientColor;
+	sky->Draw(context,cameras[selectedCamera]);
 
 	{
 		ImGui::Render(); // Turns this frame’s UI into renderable triangles
@@ -308,7 +314,7 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		ImGui::Text("Window Resolution: %dx%d", windowWidth, windowHeight);
 
 		// Can create a 3 or 4-component color editors, too!
-		ImGui::ColorEdit4("RGBA color editor", &backgroundColor.x);
+		ImGui::ColorEdit3("RGB color editor", &ambientColor.x);
 
 
 		// Create a button and test for a click
@@ -323,7 +329,7 @@ void Game::BuildUI(float deltaTime, float totalTime)
 				showImGuiDemoWindow = false;
 		}
 
-		float arr[] = { backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w };
+		float arr[] = { ambientColor.x, ambientColor.y, ambientColor.z};
 		ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
 
 		if (!randomizeColorOffset)
@@ -333,27 +339,22 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		}
 		else
 		{
-			switch (rand() % 4)
+			switch (rand() % 3)
 			{
 			case 0:
-				backgroundColor.x += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (backgroundColor.x > 1) backgroundColor.x = 1;
-				if (backgroundColor.x < 0) backgroundColor.x = 0;
+				ambientColor.x += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
+				if (ambientColor.x > 1) ambientColor.x = 1;
+				if (ambientColor.x < 0) ambientColor.x = 0;
 				break;
 			case 1:
-				backgroundColor.y += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (backgroundColor.y > 1) backgroundColor.y = 1;
-				if (backgroundColor.y < 0) backgroundColor.y = 0;
+				ambientColor.y += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
+				if (ambientColor.y > 1) ambientColor.y = 1;
+				if (ambientColor.y < 0) ambientColor.y = 0;
 				break;
 			case 2:
-				backgroundColor.z += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (backgroundColor.z > 1) backgroundColor.z = 1;
-				if (backgroundColor.z < 0) backgroundColor.z = 0;
-				break;
-			case 3:
-				backgroundColor.w += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (backgroundColor.w > 1) backgroundColor.w = 1;
-				if (backgroundColor.w < 0) backgroundColor.w = 0;
+				ambientColor.z += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
+				if (ambientColor.z > 1) ambientColor.z = 1;
+				if (ambientColor.z < 0) ambientColor.z = 0;
 				break;
 			}
 

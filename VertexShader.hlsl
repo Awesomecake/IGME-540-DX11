@@ -6,15 +6,16 @@
 // - The name of the struct itself is unimportant, but should be descriptive
 // - Each variable must have a semantic, which defines its usage
 struct VertexShaderInput
-{ 
+{
 	// Data type
 	//  |
 	//  |   Name          Semantic
 	//  |    |                |
 	//  v    v                v
-	float3 localPosition	: POSITION;     // XYZ position
-	float3 normal			: NORMAL;
-	float2 uv				: TEXCOORD;
+    float3 localPosition : POSITION; // XYZ position
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
+    float3 tangent : TANGENT;
 };
 
 cbuffer ConstantBuffer : register(b0)
@@ -50,6 +51,7 @@ VertexToPixel main( VertexShaderInput input )
     output.uv = input.uv;
     output.normal = mul((float3x3) worldInvTranspose, input.normal); // Perfect!
     output.worldPosition = mul(world, float4(input.localPosition, 1)).xyz;
+    output.tangent = mul((float3x3) world, input.tangent);
 	
 	// Whatever we return will make its way through the pipeline to the
 	// next programmable stage we're using (the pixel shader for now)

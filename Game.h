@@ -10,6 +10,7 @@
 #include "SimpleShader.h"
 #include "Material.h"
 #include "Lights.h"
+#include "Sky.h"
 
 #include <memory>
 #include <vector>
@@ -34,7 +35,8 @@ public:
 	//ImGui test value
 	bool showImGuiDemoWindow = false;
 	bool randomizeColorOffset = false;
-	DirectX::XMFLOAT4 backgroundColor = DirectX::XMFLOAT4(0.25, 0.0f, 0.25f, 1.0f);
+
+	std::shared_ptr<Sky> sky;
 
 	//Meshes
 	std::shared_ptr<Mesh> cube;
@@ -58,11 +60,11 @@ public:
 
 	std::vector<Light> lights = std::vector<Light>();
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> brickShaderResourceView;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> plankShaderResourceView;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneShaderResourceView;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestone_normalsShaderResourceView;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
-	DirectX::XMFLOAT2 uvOffset;
+	DirectX::XMFLOAT2 uvOffset = DirectX::XMFLOAT2(0,0);
 
 private:
 

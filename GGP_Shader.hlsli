@@ -24,6 +24,7 @@ struct VertexToPixel
     float2 uv : TEXCOORD;
     float3 normal : NORMAL;
     float3 worldPosition : POSITION;
+    float3 tangent : TANGENT;
 };
 
 struct Light
@@ -62,6 +63,7 @@ float3 DirectionalLight(Light light, VertexToPixel input, float3 surfaceColor, f
 
     float3 diffuse = Diffuse(input.normal, light.Direction);
     float3 specular = Specular(input, light.Direction, cameraPos, roughness);
+    specular *= any(diffuse);
     return (diffuse*surfaceColor + specular) * light.Intensity * light.Color;
 }
 
@@ -80,7 +82,8 @@ float3 PointLight(Light light, VertexToPixel input, float3 surfaceColor, float3 
     float3 attenuate = Attenuate(light, input.worldPosition);
     float3 diffuse = Diffuse(input.normal, normDir);
     float3 specular = Specular(input, normDir, cameraPos, roughness);
-    
+    specular *= any(diffuse);
+
     return (diffuse * surfaceColor + specular) * attenuate * light.Color * light.Intensity;
 }
 

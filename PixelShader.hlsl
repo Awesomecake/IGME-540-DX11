@@ -13,6 +13,7 @@ cbuffer ConstantBuffer : register(b0)
 }
 
 Texture2D SurfaceTexture : register(t0); // "t" registers for textures
+Texture2D NormalMap : register(t1);
 SamplerState BasicSampler : register(s0); // "s" registers for samplers
 
 // --------------------------------------------------------
@@ -27,8 +28,21 @@ SamplerState BasicSampler : register(s0); // "s" registers for samplers
 float4 main(VertexToPixel input) : SV_TARGET
 {    
     input.normal = normalize(input.normal);
+    float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv + uvOffset).rgb * 2 - 1;
+    unpackedNormal = normalize(unpackedNormal); // Don’t forget to normalize!
     
-    float3 light;
+    // Feel free to adjust/simplify this code to fit with your existing shader(s)
+    // Simplifications include not re-normalizing the same vector more than once!
+    float3 N = normalize(input.normal); // Must be normalized here or before
+    float3 T = normalize(input.tangent); // Must be normalized here or before
+    T = normalize(T - N * dot(T, N)); // Gram-Schmidt assumes T&N are normalized!
+    float3 B = cross(T, N);
+    float3x3 TBN = float3x3(T, B, N);
+    
+    // Assumes that input.normal is the normal later in the shader
+    input.normal = mul(unpackedNormal, TBN); // Note multiplication order!
+        
+    float3 light = ambient;
     
     for (int i = 0; i < 5; i++)
     {
