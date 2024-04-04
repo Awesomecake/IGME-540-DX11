@@ -89,7 +89,7 @@ void Game::Init()
 	mat1->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
 	mat1->samplers.insert({ "BasicSampler",samplerState });
 
-	mat2 = std::make_shared<Material>(XMFLOAT4(0.5, 1, 0.5,1), pixelShader, vertexShader,1.f);
+	mat2 = std::make_shared<Material>(XMFLOAT4(0.5, 1, 0.5,1), pixelShader, vertexShader,0.1f);
 	mat2->textureSRVs.insert({ "SurfaceTexture", cobblestoneShaderResourceView });
 	mat2->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
 	mat2->samplers.insert({ "BasicSampler",samplerState });
@@ -119,6 +119,7 @@ void Game::Init()
 	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 45.f, XMFLOAT3(0, 0.5, -5)));
 	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90.f, XMFLOAT3(0, -0.5, -5)));
 
+#pragma region Constructing Lights
 	Light light = Light();
 	light.Type = LIGHT_TYPE_POINT;
 	light.Color = XMFLOAT3(1, 0, 0);
@@ -155,6 +156,7 @@ void Game::Init()
 	light5.Color = XMFLOAT3(0, 1, 1);
 
 	lights.push_back(light5);
+#pragma endregion
 }
 
 // --------------------------------------------------------
@@ -199,7 +201,6 @@ void Game::CreateGeometry()
 	gameEntities[3].GetTransform().SetPosition(-0, -3, 0);
 	gameEntities[4].GetTransform().SetPosition(3, -3, 0);
 	gameEntities[5].GetTransform().SetPosition(6, -3, 0);
-
 }
 
 
@@ -261,10 +262,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	sky->ambient = ambientColor;
 	sky->Draw(context,cameras[selectedCamera]);
 
-	{
-		ImGui::Render(); // Turns this frame’s UI into renderable triangles
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
-	}
+	ImGui::Render(); // Turns this frame’s UI into renderable triangles
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
 
 	// Frame END
 	// - These should happen exactly ONCE PER FRAME
@@ -274,9 +273,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		//  - Puts the results of what we've drawn onto the window
 		//  - Without this, the user never sees anything
 		bool vsyncNecessary = vsync || !deviceSupportsTearing || isFullscreen;
-		swapChain->Present(
-			vsyncNecessary ? 1 : 0,
-			vsyncNecessary ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+		swapChain->Present(vsyncNecessary ? 1 : 0, vsyncNecessary ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 
 		// Must re-bind buffers after presenting, as they become unbound
 		context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthBufferDSV.Get());
@@ -307,15 +304,15 @@ void Game::ImGuiUpdate(float deltaTime, float totalTime)
 
 void Game::BuildUI(float deltaTime, float totalTime)
 {
+	ImVec4 detailsColor = ImVec4(0.7, 0.7, 1, 1);
+
 	ImGui::Begin("Inspector"); // Everything after is part of the window
+
 	if (ImGui::TreeNode("App Details"))
 	{
-		ImGui::Text("Framerate: %f fps", ImGui::GetIO().Framerate);
-		ImGui::Text("Window Resolution: %dx%d", windowWidth, windowHeight);
-
-		// Can create a 3 or 4-component color editors, too!
-		ImGui::ColorEdit3("RGB color editor", &ambientColor.x);
-
+		ImGui::TextColored(detailsColor, " - Framerate: %f fps", ImGui::GetIO().Framerate);
+		ImGui::TextColored(detailsColor, " - Window Resolution: %dx%d", windowWidth, windowHeight);
+		ImGui::ColorEdit3("Ambient Color", &ambientColor.x);
 
 		// Create a button and test for a click
 		if (!showImGuiDemoWindow)
@@ -329,51 +326,16 @@ void Game::BuildUI(float deltaTime, float totalTime)
 				showImGuiDemoWindow = false;
 		}
 
-		float arr[] = { ambientColor.x, ambientColor.y, ambientColor.z};
-		ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
-
-		if (!randomizeColorOffset)
-		{
-			if (ImGui::Button("Randomly change color"))
-				randomizeColorOffset = true;
-		}
-		else
-		{
-			switch (rand() % 3)
-			{
-			case 0:
-				ambientColor.x += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (ambientColor.x > 1) ambientColor.x = 1;
-				if (ambientColor.x < 0) ambientColor.x = 0;
-				break;
-			case 1:
-				ambientColor.y += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (ambientColor.y > 1) ambientColor.y = 1;
-				if (ambientColor.y < 0) ambientColor.y = 0;
-				break;
-			case 2:
-				ambientColor.z += (float) (deltaTime * (rand() % 10 - 4.5) / 2.f);
-				if (ambientColor.z > 1) ambientColor.z = 1;
-				if (ambientColor.z < 0) ambientColor.z = 0;
-				break;
-			}
-
-			if (ImGui::Button("Turn off random color change"))
-				randomizeColorOffset = false;
-		}
-
 		ImGui::TreePop();
-		ImGui::Spacing();
 	}
 
 	if (ImGui::TreeNode("Meshes"))
 	{
-		ImGui::Text("Mesh 0: %u triangle(s)", cube.get()->GetIndexCount()/3);
-		ImGui::Text("Mesh 1: %u triangle(s)", cylinder.get()->GetIndexCount()/3);
-		ImGui::Text("Mesh 2: %u triangle(s)", helix.get()->GetIndexCount()/3);
+		ImGui::TextColored(detailsColor, " - Mesh 0: %u triangle(s)", cube.get()->GetIndexCount()/3);
+		ImGui::TextColored(detailsColor, " - Mesh 1: %u triangle(s)", cylinder.get()->GetIndexCount()/3);
+		ImGui::TextColored(detailsColor, " - Mesh 2: %u triangle(s)", helix.get()->GetIndexCount()/3);
 
 		ImGui::TreePop();
-		ImGui::Spacing();
 	}
 
 	if (ImGui::TreeNode("Scene Entities"))
@@ -402,12 +364,10 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		ImGui::TreePop();
 	}
 
-	if (ImGui::TreeNode("Cameras"))
+	if (ImGui::TreeNode("Current Camera"))
 	{
 		std::string string = "Camera #" + std::to_string(selectedCamera);
 		ImGui::SeparatorText(string.c_str());
-
-		ImVec4 detailsColor = ImVec4(1, 1, 1, 1);
 
 		ImGui::TextColored(detailsColor, "Camera Details:");
 		{
