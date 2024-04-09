@@ -84,14 +84,17 @@ void Game::Init()
 	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cobblestone.png").c_str(), nullptr, cobblestoneShaderResourceView.GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cobblestone_normals.png").c_str(), nullptr, cobblestone_normalsShaderResourceView.GetAddressOf());
 
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cushion.png").c_str(), nullptr, cushionShaderResourceView.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cushion_normals.png").c_str(), nullptr, cushion_normalsShaderResourceView.GetAddressOf());
+
 	mat1 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.1f);
 	mat1->textureSRVs.insert({ "SurfaceTexture", cobblestoneShaderResourceView});
 	mat1->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
 	mat1->samplers.insert({ "BasicSampler",samplerState });
 
-	mat2 = std::make_shared<Material>(XMFLOAT4(0.5, 1, 0.5,1), pixelShader, vertexShader,0.1f);
-	mat2->textureSRVs.insert({ "SurfaceTexture", cobblestoneShaderResourceView });
-	mat2->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
+	mat2 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.1f);
+	mat2->textureSRVs.insert({ "SurfaceTexture", cushionShaderResourceView });
+	mat2->textureSRVs.insert({ "NormalMap", cushion_normalsShaderResourceView });
 	mat2->samplers.insert({ "BasicSampler",samplerState });
 
 	mat1->PrepareMaterial();
@@ -188,7 +191,7 @@ void Game::CreateGeometry()
 	torus = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.igme540obj").c_str(), device);
 	quad = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.igme540obj").c_str(), device);
 
-	gameEntities.push_back(GameEntity(cube,mat1));
+	gameEntities.push_back(GameEntity(cube, mat1));
 	gameEntities.push_back(GameEntity(cylinder, mat1));
 	gameEntities.push_back(GameEntity(helix, mat1));
 	gameEntities.push_back(GameEntity(sphere,mat2));
@@ -255,7 +258,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	{
 		entity.GetMaterial()->pixelShader->SetFloat3("ambient", ambientColor);
 		entity.GetMaterial()->pixelShader->SetFloat("totalTime", totalTime);
-		entity.GetMaterial()->pixelShader->SetFloat2("uvOffset", uvOffset);
 		entity.Draw(context, cameras[selectedCamera],lights);
 	}
 
@@ -436,7 +438,28 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	}
 	if (ImGui::TreeNode("Textures"))
 	{
-		ImGui::DragFloat2("UV Offset", &uvOffset.x, 0.005f, -10.f, 10.0f, "%.01f");
+		if (!toggleMat)
+		{
+			if (ImGui::Button("Use Cushion Texture"))
+			{
+				toggleMat = true;
+				for (int i = 0; i < gameEntities.size(); i++)
+				{
+					gameEntities[i].SetMaterial(mat2);
+				}
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Use Cobblestone Texture"))
+			{
+				toggleMat = false;
+				for (int i = 0; i < gameEntities.size(); i++)
+				{
+					gameEntities[i].SetMaterial(mat1);
+				}
+			}
+		}
 
 		ImGui::TreePop();
 	}

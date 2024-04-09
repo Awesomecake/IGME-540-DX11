@@ -30,6 +30,12 @@
     <Filter Include="Header Files\Object">
       <UniqueIdentifier>{9c89efd1-1006-4d66-a776-b8f03fb97c7b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Rendering">
+      <UniqueIdentifier>{7abb325c-30a0-42a9-a0b9-957e08cf086f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\SkyBoxShader">
+      <UniqueIdentifier>{dff5c432-746d-49b7-81a5-5417c2808834}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -94,9 +100,6 @@
     <ClInclude Include="Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ImGui\imconfig.h">
       <Filter>Header Files\ImGui</Filter>
     </ClInclude>
@@ -120,12 +123,6 @@
     </ClInclude>
     <ClInclude Include="ImGui\imstb_truetype.h">
       <Filter>Header Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DXCore.h">
       <Filter>Header Files\Core</Filter>
@@ -151,8 +148,17 @@
     <ClInclude Include="Transform.h">
       <Filter>Header Files\Object</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="Sky.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Header Files\Rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -166,10 +172,10 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SkyVertexShader.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\SkyBoxShader</Filter>
     </FxCompile>
     <FxCompile Include="SkyPixelShader.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\SkyBoxShader</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

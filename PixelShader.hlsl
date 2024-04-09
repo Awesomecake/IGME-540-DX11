@@ -4,12 +4,6 @@ cbuffer ConstantBuffer : register(b0)
 {
     float4 surfaceColor;
     float totalTime;
-    float2 uvOffset;
-    
-    float3 ambient;
-    Light lights[5];
-    float roughness;
-    float3 cameraPos;
 }
 
 Texture2D SurfaceTexture : register(t0); // "t" registers for textures
@@ -28,7 +22,7 @@ SamplerState BasicSampler : register(s0); // "s" registers for samplers
 float4 main(VertexToPixel input) : SV_TARGET
 {    
     input.normal = normalize(input.normal);
-    float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv + uvOffset).rgb * 2 - 1;
+    float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
     unpackedNormal = normalize(unpackedNormal); // Don’t forget to normalize!
     
     // Feel free to adjust/simplify this code to fit with your existing shader(s)
@@ -59,7 +53,7 @@ float4 main(VertexToPixel input) : SV_TARGET
         }
     }
     
-    float3 textureColor = SurfaceTexture.Sample(BasicSampler, input.uv+uvOffset).rgb;
+    float3 textureColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb;
         
     return surfaceColor * float4(textureColor * light, 1);
 }

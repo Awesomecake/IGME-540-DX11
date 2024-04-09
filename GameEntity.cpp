@@ -31,28 +31,27 @@ void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::
 	DirectX::XMFLOAT2 mousePos = DirectX::XMFLOAT2((float)Input::GetInstance().GetMouseX(), (float)Input::GetInstance().GetMouseY());
 	material->PrepareMaterial();
 
-	//Set Shaders and Load Data
-	{
-		material->pixelShader->SetFloat4("surfaceColor", material->surfaceColor);
-		
-		material->pixelShader->SetFloat2("mousePos", mousePos);
+	//Set Pixel Shader and Load Data
+	material->pixelShader->SetFloat4("surfaceColor", material->surfaceColor);
+	material->pixelShader->SetFloat2("mousePos", mousePos);
+	material->pixelShader->SetFloat("roughness", material->roughness);
+	material->pixelShader->SetFloat3("cameraPos", camera->GetTransform().GetPosition());
+	material->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+	
+	material->pixelShader->CopyAllBufferData();
 
-		material->pixelShader->SetFloat("roughness", material->roughness);
-		material->pixelShader->SetFloat3("cameraPos", camera->GetTransform().GetPosition());
+	//Set Vertex Shader and Load Data
+	material->vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
+	material->vertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
+	material->vertexShader->SetMatrix4x4("projection", camera->GetProjectionMatrix());
+	material->vertexShader->SetMatrix4x4("worldInvTranspose", transform.GetWorldInverseTransposeMatrix());
 
-		material->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
-
-		material->pixelShader->CopyAllBufferData();
-	}
-
-	{
-		material->vertexShader->SetMatrix4x4("world", transform.GetWorldMatrix());
-		material->vertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
-		material->vertexShader->SetMatrix4x4("projection", camera->GetProjectionMatrix());
-		material->vertexShader->SetMatrix4x4("worldInvTranspose", transform.GetWorldInverseTransposeMatrix());
-
-		material->vertexShader->CopyAllBufferData();
-	}
+	material->vertexShader->CopyAllBufferData();
 
 	mesh->Draw(context);
+}
+
+void GameEntity::SetMaterial(std::shared_ptr<Material> newMat)
+{
+	material = newMat;
 }

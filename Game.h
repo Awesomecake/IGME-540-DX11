@@ -35,8 +35,17 @@ public:
 	//ImGui test value
 	bool showImGuiDemoWindow = false;
 	bool randomizeColorOffset = false;
+	bool toggleMat = false;
+	DirectX::XMFLOAT3 ambientColor = { 0.1f,0.1f,0.1f };
+
+	std::vector<GameEntity> gameEntities;
+	std::vector<Light> lights = std::vector<Light>();
 
 	std::shared_ptr<Sky> sky;
+
+	//Camera
+	std::vector<std::shared_ptr<Camera>> cameras;
+	int selectedCamera = 0;
 
 	//Meshes
 	std::shared_ptr<Mesh> cube;
@@ -46,25 +55,16 @@ public:
 	std::shared_ptr<Mesh> torus;
 	std::shared_ptr<Mesh> quad;
 
-	std::vector<GameEntity> gameEntities;
 
 	//Materials
 	std::shared_ptr<Material> mat1;
 	std::shared_ptr<Material> mat2;
 
-	//Camera
-	std::vector<std::shared_ptr<Camera>> cameras;
-	int selectedCamera = 0;
-
-	DirectX::XMFLOAT3 ambientColor = { 0.1f,0.1f,0.1f};
-
-	std::vector<Light> lights = std::vector<Light>();
-
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneShaderResourceView;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestone_normalsShaderResourceView;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
-	DirectX::XMFLOAT2 uvOffset = DirectX::XMFLOAT2(0,0);
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushionShaderResourceView;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushion_normalsShaderResourceView;
 
 private:
 
@@ -75,5 +75,8 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::shared_ptr<SimplePixelShader> pixelShader2;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
+
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
+
 };
 
