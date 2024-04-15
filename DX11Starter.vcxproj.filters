@@ -179,9 +179,12 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="GGP_Shader.hlsli">
+    <None Include="Lighting.hlsli">
       <Filter>Shaders</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="PBR.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

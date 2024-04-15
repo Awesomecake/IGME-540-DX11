@@ -14,6 +14,8 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
 
+#define PBR_Assets L"../../Assets/PBR/"
+
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -81,24 +83,10 @@ void Game::Init()
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
 
-	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cobblestone.png").c_str(), nullptr, cobblestoneShaderResourceView.GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cobblestone_normals.png").c_str(), nullptr, cobblestone_normalsShaderResourceView.GetAddressOf());
-
-	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cushion.png").c_str(), nullptr, cushionShaderResourceView.GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(L"../../Assets/Textures with Normal Maps/cushion_normals.png").c_str(), nullptr, cushion_normalsShaderResourceView.GetAddressOf());
-
-	mat1 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.1f);
-	mat1->textureSRVs.insert({ "SurfaceTexture", cobblestoneShaderResourceView});
-	mat1->textureSRVs.insert({ "NormalMap", cobblestone_normalsShaderResourceView });
-	mat1->samplers.insert({ "BasicSampler",samplerState });
-
-	mat2 = std::make_shared<Material>(XMFLOAT4(1, 1, 1,1), pixelShader, vertexShader,0.1f);
-	mat2->textureSRVs.insert({ "SurfaceTexture", cushionShaderResourceView });
-	mat2->textureSRVs.insert({ "NormalMap", cushion_normalsShaderResourceView });
-	mat2->samplers.insert({ "BasicSampler",samplerState });
-
-	mat1->PrepareMaterial();
-	mat2->PrepareMaterial();
+	CreateMaterial(PBR_Assets "floor_albedo.png", PBR_Assets "floor_normals.png", PBR_Assets "floor_roughness.png", PBR_Assets "floor_metal.png");
+	CreateMaterial(PBR_Assets "bronze_albedo.png", PBR_Assets "bronze_normals.png", PBR_Assets "bronze_roughness.png", PBR_Assets "bronze_metal.png");
+	CreateMaterial(PBR_Assets "cobblestone_albedo.png", PBR_Assets "cobblestone_normals.png", PBR_Assets "cobblestone_roughness.png", PBR_Assets "cobblestone_metalness.png");
+	CreateMaterial(PBR_Assets "scratched_albedo.png", PBR_Assets "scratched_normals.png", PBR_Assets "scratched_roughness.png", PBR_Assets "scratched_metal.png");
 
 	CreateGeometry();
 
@@ -177,6 +165,28 @@ void Game::LoadShaders()
 	vertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader.cso").c_str());
 }
 
+void Game::CreateMaterial(std::wstring albedoFile, std::wstring normalFile, std::wstring roughnessFile, std::wstring metalnessFile)
+{
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> albedoSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> normalsSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> roughnessSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> metalnessSRV;
+
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(albedoFile).c_str(), nullptr, albedoSRV.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(normalFile).c_str(), nullptr, normalsSRV.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(roughnessFile).c_str(), nullptr, roughnessSRV.GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(), FixPath(metalnessFile).c_str(), nullptr, metalnessSRV.GetAddressOf());
+
+	std::shared_ptr<Material> mat = std::make_shared<Material>(XMFLOAT4(1, 1, 1, 1), pixelShader, vertexShader);
+	mat->textureSRVs.insert({ "Albedo", albedoSRV });
+	mat->textureSRVs.insert({ "NormalMap", normalsSRV });
+	mat->textureSRVs.insert({ "RoughnessMap", roughnessSRV });
+	mat->textureSRVs.insert({ "MetalnessMap", metalnessSRV });
+	mat->samplers.insert({ "BasicSampler",samplerState });
+	mat->PrepareMaterial();
+
+	materials.push_back(mat);
+}
 
 
 // --------------------------------------------------------
@@ -191,12 +201,12 @@ void Game::CreateGeometry()
 	torus = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.igme540obj").c_str(), device);
 	quad = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.igme540obj").c_str(), device);
 
-	gameEntities.push_back(GameEntity(cube, mat1));
-	gameEntities.push_back(GameEntity(cylinder, mat1));
-	gameEntities.push_back(GameEntity(helix, mat1));
-	gameEntities.push_back(GameEntity(sphere,mat2));
-	gameEntities.push_back(GameEntity(torus, mat2));
-	gameEntities.push_back(GameEntity(quad, mat2));
+	gameEntities.push_back(GameEntity(cube, materials[0]));
+	gameEntities.push_back(GameEntity(cylinder, materials[0]));
+	gameEntities.push_back(GameEntity(helix, materials[0]));
+	gameEntities.push_back(GameEntity(sphere, materials[1]));
+	gameEntities.push_back(GameEntity(torus, materials[1]));
+	gameEntities.push_back(GameEntity(quad, materials[1]));
 
 	gameEntities[0].GetTransform().SetPosition(-9, -3, 0);
 	gameEntities[1].GetTransform().SetPosition(-6, -3, 0);
@@ -306,7 +316,7 @@ void Game::ImGuiUpdate(float deltaTime, float totalTime)
 
 void Game::BuildUI(float deltaTime, float totalTime)
 {
-	ImVec4 detailsColor = ImVec4(0.7, 0.7, 1, 1);
+	ImVec4 detailsColor = ImVec4(0.7f, 0.7f, 1, 1);
 
 	ImGui::Begin("Inspector"); // Everything after is part of the window
 
@@ -336,6 +346,9 @@ void Game::BuildUI(float deltaTime, float totalTime)
 		ImGui::TextColored(detailsColor, " - Mesh 0: %u triangle(s)", cube.get()->GetIndexCount()/3);
 		ImGui::TextColored(detailsColor, " - Mesh 1: %u triangle(s)", cylinder.get()->GetIndexCount()/3);
 		ImGui::TextColored(detailsColor, " - Mesh 2: %u triangle(s)", helix.get()->GetIndexCount()/3);
+		ImGui::TextColored(detailsColor, " - Mesh 3: %u triangle(s)", sphere.get()->GetIndexCount() / 3);
+		ImGui::TextColored(detailsColor, " - Mesh 4: %u triangle(s)", torus.get()->GetIndexCount() / 3);
+		ImGui::TextColored(detailsColor, " - Mesh 5: %u triangle(s)", quad.get()->GetIndexCount() / 3);
 
 		ImGui::TreePop();
 	}
@@ -440,23 +453,23 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	{
 		if (!toggleMat)
 		{
-			if (ImGui::Button("Use Cushion Texture"))
+			if (ImGui::Button("Use Bronze Texture"))
 			{
 				toggleMat = true;
 				for (int i = 0; i < gameEntities.size(); i++)
 				{
-					gameEntities[i].SetMaterial(mat2);
+					gameEntities[i].SetMaterial(materials[1]);
 				}
 			}
 		}
 		else
 		{
-			if (ImGui::Button("Use Cobblestone Texture"))
+			if (ImGui::Button("Use Floor Texture"))
 			{
 				toggleMat = false;
 				for (int i = 0; i < gameEntities.size(); i++)
 				{
-					gameEntities[i].SetMaterial(mat1);
+					gameEntities[i].SetMaterial(materials[0]);
 				}
 			}
 		}

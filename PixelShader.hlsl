@@ -1,4 +1,4 @@
-#include "GGP_Shader.hlsli"
+#include "Lighting.hlsli"
 
 cbuffer ConstantBuffer : register(b0)
 {
@@ -6,9 +6,11 @@ cbuffer ConstantBuffer : register(b0)
     float totalTime;
 }
 
-Texture2D SurfaceTexture : register(t0); // "t" registers for textures
+Texture2D Albedo : register(t0);
 Texture2D NormalMap : register(t1);
-SamplerState BasicSampler : register(s0); // "s" registers for samplers
+Texture2D RoughnessMap : register(t2);
+Texture2D MetalnessMap : register(t3);
+SamplerState BasicSampler : register(s0);
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -25,6 +27,11 @@ float4 main(VertexToPixel input) : SV_TARGET
     float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
     unpackedNormal = normalize(unpackedNormal); // Don’t forget to normalize!
     
+    float3 albedoColor = pow(Albedo.Sample(BasicSampler, input.uv).rgb, 2.2f);
+    float roughness = RoughnessMap.Sample(BasicSampler, input.uv).r;
+    float metalness = MetalnessMap.Sample(BasicSampler, input.uv).r;
+    float3 specularColor = lerp(F0_NON_METAL, albedoColor.rgb, metalness);
+    
     // Feel free to adjust/simplify this code to fit with your existing shader(s)
     // Simplifications include not re-normalizing the same vector more than once!
     float3 N = normalize(input.normal); // Must be normalized here or before
@@ -36,24 +43,7 @@ float4 main(VertexToPixel input) : SV_TARGET
     // Assumes that input.normal is the normal later in the shader
     input.normal = mul(unpackedNormal, TBN); // Note multiplication order!
         
-    float3 light = ambient;
-    
-    for (int i = 0; i < 5; i++)
-    {
-        switch (lights[i].Type)
-        {
-            case LIGHT_TYPE_DIRECTIONAL:
-                light += DirectionalLight(lights[i],input, surfaceColor.xyz,cameraPos,roughness);
-                break;
-            case LIGHT_TYPE_POINT:
-                light += PointLight(lights[i],input,surfaceColor.xyz,cameraPos,roughness);
-                break;
-            case LIGHT_TYPE_SPOT:
-                break;
-        }
-    }
-    
-    float3 textureColor = pow(SurfaceTexture.Sample(BasicSampler, input.uv).rgb, 2.2f);
-    
-    return float4(pow(surfaceColor.xyz * textureColor * light, 1.0f / 2.2f), 1);
+    float3 totalLight = CalcLights(input, surfaceColor.xyz,specularColor,roughness,metalness);
+        
+    return float4(pow(surfaceColor.xyz * albedoColor * totalLight, 1.0f / 2.2f), 1);
 }

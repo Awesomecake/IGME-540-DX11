@@ -36,7 +36,7 @@ public:
 	bool showImGuiDemoWindow = false;
 	bool randomizeColorOffset = false;
 	bool toggleMat = false;
-	DirectX::XMFLOAT3 ambientColor = { 0.1f,0.1f,0.1f };
+	DirectX::XMFLOAT3 ambientColor = { 0.5f,0.5f,0.5f };
 
 	std::vector<GameEntity> gameEntities;
 	std::vector<Light> lights = std::vector<Light>();
@@ -57,20 +57,14 @@ public:
 
 
 	//Materials
-	std::shared_ptr<Material> mat1;
-	std::shared_ptr<Material> mat2;
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestoneShaderResourceView;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cobblestone_normalsShaderResourceView;
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushionShaderResourceView;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cushion_normalsShaderResourceView;
+	std::vector<std::shared_ptr<Material>> materials;
 
 private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders(); 
 	void CreateGeometry();
+	void CreateMaterial(std::wstring albedoFile, std::wstring normalFile, std::wstring roughnessFile, std::wstring metalnessFile);
 	
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::shared_ptr<SimplePixelShader> pixelShader2;

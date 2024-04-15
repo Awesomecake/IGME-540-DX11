@@ -1,4 +1,4 @@
-#include "GGP_Shader.hlsli"
+#include "Lighting.hlsli"
 
 cbuffer ConstantBuffer : register(b0)
 {
