@@ -53,7 +53,7 @@ float4 main(VertexToPixel input) : SV_TARGET
         }
     }
     
-    float3 textureColor = SurfaceTexture.Sample(BasicSampler, input.uv).rgb;
-        
-    return surfaceColor * float4(textureColor * light, 1);
+    float3 textureColor = pow(SurfaceTexture.Sample(BasicSampler, input.uv).rgb, 2.2f);
+    
+    return float4(pow(surfaceColor.xyz * textureColor * light, 1.0f / 2.2f), 1);
 }
