@@ -11,6 +11,7 @@
 #include "Material.h"
 #include "Lights.h"
 #include "Sky.h"
+#include "ShadowMap.h"
 
 #include <memory>
 #include <vector>
@@ -35,7 +36,7 @@ public:
 	//ImGui test value
 	bool showImGuiDemoWindow = false;
 	bool randomizeColorOffset = false;
-	bool toggleMat = false;
+	int ImGuiMaterialIndex = 0;
 	DirectX::XMFLOAT3 ambientColor = { 0.5f,0.5f,0.5f };
 
 	std::vector<GameEntity> gameEntities;
@@ -59,6 +60,9 @@ public:
 	//Materials
 	std::vector<std::shared_ptr<Material>> materials;
 
+	//Shadow Map
+	ShadowMap shadowMap;
+
 private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
@@ -69,6 +73,7 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::shared_ptr<SimplePixelShader> pixelShader2;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimpleVertexShader> shadowMapVertexShader;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 

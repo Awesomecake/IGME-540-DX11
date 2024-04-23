@@ -83,6 +83,8 @@ void Game::Init()
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
 
+	shadowMap = ShadowMap(device, shadowMapVertexShader);
+
 	CreateMaterial(PBR_Assets "floor_albedo.png", PBR_Assets "floor_normals.png", PBR_Assets "floor_roughness.png", PBR_Assets "floor_metal.png");
 	CreateMaterial(PBR_Assets "bronze_albedo.png", PBR_Assets "bronze_normals.png", PBR_Assets "bronze_roughness.png", PBR_Assets "bronze_metal.png");
 	CreateMaterial(PBR_Assets "cobblestone_albedo.png", PBR_Assets "cobblestone_normals.png", PBR_Assets "cobblestone_roughness.png", PBR_Assets "cobblestone_metalness.png");
@@ -131,8 +133,8 @@ void Game::Init()
 	lights.push_back(light2);
 
 	Light light3 = Light();
-	light3.Direction = XMFLOAT3(0, 0, 1);
-	light3.Color = XMFLOAT3(0, 0, 1);
+	light3.Direction = XMFLOAT3(0, -1, -1);
+	light3.Color = XMFLOAT3(1, 1, 1);
 
 	lights.push_back(light3);
 
@@ -148,6 +150,8 @@ void Game::Init()
 
 	lights.push_back(light5);
 #pragma endregion
+
+	shadowMap.MakeProjection(light3.Direction);
 }
 
 // --------------------------------------------------------
@@ -163,6 +167,8 @@ void Game::LoadShaders()
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader.cso").c_str());
 	pixelShader2 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader2.cso").c_str());
 	vertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader.cso").c_str());
+	
+	shadowMapVertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"ShadowMapVertexShader.cso").c_str());
 }
 
 void Game::CreateMaterial(std::wstring albedoFile, std::wstring normalFile, std::wstring roughnessFile, std::wstring metalnessFile)
@@ -207,13 +213,16 @@ void Game::CreateGeometry()
 	gameEntities.push_back(GameEntity(sphere, materials[1]));
 	gameEntities.push_back(GameEntity(torus, materials[1]));
 	gameEntities.push_back(GameEntity(quad, materials[1]));
+	gameEntities.push_back(GameEntity(cube, materials[2]));
 
 	gameEntities[0].GetTransform().SetPosition(-9, -3, 0);
 	gameEntities[1].GetTransform().SetPosition(-6, -3, 0);
 	gameEntities[2].GetTransform().SetPosition(-3, -3, 0);
-	gameEntities[3].GetTransform().SetPosition(-0, -3, 0);
 	gameEntities[4].GetTransform().SetPosition(3, -3, 0);
 	gameEntities[5].GetTransform().SetPosition(6, -3, 0);
+
+	gameEntities[6].GetTransform().SetScale(20, 1, 20);
+	gameEntities[6].GetTransform().SetPosition(0, -7, 0 );
 }
 
 
@@ -245,6 +254,8 @@ void Game::Update(float deltaTime, float totalTime)
 	cameras[selectedCamera].get()->Update(deltaTime);
 	ImGuiUpdate(deltaTime, totalTime);
 	BuildUI(deltaTime, totalTime);
+
+	gameEntities[3].GetTransform().SetPosition(3*cos(totalTime), -3, 3*sin(totalTime));
 }
 
 // --------------------------------------------------------
@@ -263,6 +274,20 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Clear the depth buffer (resets per-pixel occlusion information)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
+
+	shadowMap.DrawShadowMap(context,gameEntities);
+
+	ImGui::Image(shadowMap.shadowSRV.Get(), ImVec2(512, 512));
+
+	D3D11_VIEWPORT viewport = {};
+	viewport.Width = (float)this->windowWidth;
+	viewport.Height = (float)this->windowHeight;
+	viewport.MaxDepth = 1.0f;
+	context->RSSetViewports(1, &viewport);
+	context->OMSetRenderTargets(
+		1,
+		backBufferRTV.GetAddressOf(),
+		depthBufferDSV.Get());
 
 	for(GameEntity entity : gameEntities)
 	{
@@ -451,26 +476,12 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	}
 	if (ImGui::TreeNode("Textures"))
 	{
-		if (!toggleMat)
+		if (ImGui::Button("Cycle Texture"))
 		{
-			if (ImGui::Button("Use Bronze Texture"))
+			for (int i = 0; i < gameEntities.size(); i++)
 			{
-				toggleMat = true;
-				for (int i = 0; i < gameEntities.size(); i++)
-				{
-					gameEntities[i].SetMaterial(materials[1]);
-				}
-			}
-		}
-		else
-		{
-			if (ImGui::Button("Use Floor Texture"))
-			{
-				toggleMat = false;
-				for (int i = 0; i < gameEntities.size(); i++)
-				{
-					gameEntities[i].SetMaterial(materials[0]);
-				}
+				ImGuiMaterialIndex++;
+				gameEntities[i].SetMaterial(materials[ImGuiMaterialIndex % materials.size()]);
 			}
 		}
 
