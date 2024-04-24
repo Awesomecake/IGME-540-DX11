@@ -26,6 +26,7 @@ struct VertexToPixel
     float3 normal : NORMAL;
     float3 worldPosition : POSITION;
     float3 tangent : TANGENT;
+    float4 shadowMapPos : SHADOW_POSITION;
 };
 
 struct Light
@@ -81,7 +82,7 @@ float3 PointLight(Light light, VertexToPixel input, float3 surfaceColor, float3 
     return (balancedDiff * surfaceColor + spec) * light.Intensity * light.Color;
 }
 
-float3 CalcLights(VertexToPixel input, float3 surfaceColor, float3 specularColor, float roughness, float metalness)
+float3 CalcLights(VertexToPixel input, float3 surfaceColor, float3 specularColor, float roughness, float metalness, float shadowMapShadowAmount)
 {
     float3 light;
     float3 toCam = normalize(cameraPos - input.worldPosition);
@@ -91,7 +92,12 @@ float3 CalcLights(VertexToPixel input, float3 surfaceColor, float3 specularColor
         switch (lights[i].Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                light += DirectionalLight(lights[i], input, surfaceColor, toCam, specularColor, roughness, metalness);
+                float lightAdditive = DirectionalLight(lights[i], input, surfaceColor, toCam, specularColor, roughness, metalness);
+                if (i == 0)
+                {
+                    lightAdditive *= shadowMapShadowAmount;
+                }
+                light += lightAdditive;
                 break;
             case LIGHT_TYPE_POINT:
                 light += PointLight(lights[i], input, surfaceColor, toCam, specularColor, roughness, metalness);

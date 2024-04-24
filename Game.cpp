@@ -83,7 +83,7 @@ void Game::Init()
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
 
-	shadowMap = ShadowMap(device, shadowMapVertexShader);
+	shadowMap = ShadowMap(device, shadowMapVertexShader, windowWidth, windowHeight);
 
 	CreateMaterial(PBR_Assets "floor_albedo.png", PBR_Assets "floor_normals.png", PBR_Assets "floor_roughness.png", PBR_Assets "floor_metal.png");
 	CreateMaterial(PBR_Assets "bronze_albedo.png", PBR_Assets "bronze_normals.png", PBR_Assets "bronze_roughness.png", PBR_Assets "bronze_metal.png");
@@ -113,6 +113,14 @@ void Game::Init()
 	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, 90.f, XMFLOAT3(0, -0.5, -5)));
 
 #pragma region Constructing Lights
+	lights = std::vector<Light>();
+
+	Light light3 = Light();
+	light3.Direction = XMFLOAT3(0, -1, -1);
+	light3.Color = XMFLOAT3(1, 1, 1);
+
+	lights.push_back(light3);
+
 	Light light = Light();
 	light.Type = LIGHT_TYPE_POINT;
 	light.Color = XMFLOAT3(1, 0, 0);
@@ -120,7 +128,6 @@ void Game::Init()
 	light.Range = 10;
 	light.Intensity = 2;
 
-	lights = std::vector<Light>();
 	lights.push_back(light);
 
 	Light light2 = Light();
@@ -131,12 +138,6 @@ void Game::Init()
 	light2.Intensity = 2;
 
 	lights.push_back(light2);
-
-	Light light3 = Light();
-	light3.Direction = XMFLOAT3(0, -1, -1);
-	light3.Color = XMFLOAT3(1, 1, 1);
-
-	lights.push_back(light3);
 
 	Light light4 = light3;
 	light4.Direction = XMFLOAT3(-1, 0, 0);
@@ -275,24 +276,18 @@ void Game::Draw(float deltaTime, float totalTime)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	shadowMap.DrawShadowMap(context,gameEntities);
-
+	shadowMap.DrawShadowMap(context,gameEntities,backBufferRTV, depthBufferDSV);
 	ImGui::Image(shadowMap.shadowSRV.Get(), ImVec2(512, 512));
-
-	D3D11_VIEWPORT viewport = {};
-	viewport.Width = (float)this->windowWidth;
-	viewport.Height = (float)this->windowHeight;
-	viewport.MaxDepth = 1.0f;
-	context->RSSetViewports(1, &viewport);
-	context->OMSetRenderTargets(
-		1,
-		backBufferRTV.GetAddressOf(),
-		depthBufferDSV.Get());
 
 	for(GameEntity entity : gameEntities)
 	{
 		entity.GetMaterial()->pixelShader->SetFloat3("ambient", ambientColor);
 		entity.GetMaterial()->pixelShader->SetFloat("totalTime", totalTime);
+		entity.GetMaterial()->pixelShader->SetShaderResourceView("ShadowMap", shadowMap.shadowSRV.Get());
+		entity.GetMaterial()->pixelShader->SetSamplerState("ShadowSampler", shadowMap.shadowSampler);
+		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightView", shadowMap.shadowViewMatrix);
+		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightProjection", shadowMap.shadowProjectionMatrix);
+
 		entity.Draw(context, cameras[selectedCamera],lights);
 	}
 
@@ -301,6 +296,10 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	ImGui::Render(); // Turns this frame’s UI into renderable triangles
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
+
+
+	ID3D11ShaderResourceView* nullSRVs[128] = {};
+	context->PSSetShaderResources(0, 128, nullSRVs);
 
 	// Frame END
 	// - These should happen exactly ONCE PER FRAME

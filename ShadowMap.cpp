@@ -2,8 +2,14 @@
 
 using namespace DirectX;
 
-ShadowMap::ShadowMap(Microsoft::WRL::ComPtr<ID3D11Device> device, std::shared_ptr<SimpleVertexShader> _shadowMapVertexShader) : shadowMapVertexShader(_shadowMapVertexShader)
+ShadowMap::ShadowMap() : shadowProjectionMatrix(XMFLOAT4X4()), shadowViewMatrix(XMFLOAT4X4()), windowHeight(0), windowWidth(0) { }
+
+ShadowMap::ShadowMap(Microsoft::WRL::ComPtr<ID3D11Device> device, std::shared_ptr<SimpleVertexShader> _shadowMapVertexShader, int _windowWidth, int _windowHeight) 
+	: shadowMapVertexShader(_shadowMapVertexShader), windowWidth(_windowWidth), windowHeight(_windowHeight)
 {
+	shadowProjectionMatrix = XMFLOAT4X4();
+	shadowViewMatrix = XMFLOAT4X4();
+
 	// Create the actual texture that will be the shadow map
 	D3D11_TEXTURE2D_DESC shadowDesc = {};
 	shadowDesc.Width = shadowMapResolution; // Ideally a power of 2 (like 1024)
@@ -40,6 +46,23 @@ ShadowMap::ShadowMap(Microsoft::WRL::ComPtr<ID3D11Device> device, std::shared_pt
 		shadowTexture.Get(),
 		&srvDesc,
 		shadowSRV.GetAddressOf());
+
+	D3D11_RASTERIZER_DESC shadowRastDesc = {};
+	shadowRastDesc.FillMode = D3D11_FILL_SOLID;
+	shadowRastDesc.CullMode = D3D11_CULL_BACK;
+	shadowRastDesc.DepthClipEnable = true;
+	shadowRastDesc.DepthBias = 1000; // Min. precision units, not world units!
+	shadowRastDesc.SlopeScaledDepthBias = 1.0f; // Bias more based on slope
+	device->CreateRasterizerState(&shadowRastDesc, &shadowRasterizer);
+
+	D3D11_SAMPLER_DESC shadowSampDesc = {};
+	shadowSampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	shadowSampDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+	shadowSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.BorderColor[0] = 1.0f; // Only need the first component
+	device->CreateSamplerState(&shadowSampDesc, &shadowSampler);
 }
 
 ShadowMap::~ShadowMap() { }
@@ -65,7 +88,7 @@ void ShadowMap::MakeProjection(XMFLOAT3 direction)
 	XMStoreFloat4x4(&shadowProjectionMatrix, lightProjection);
 }
 
-void ShadowMap::DrawShadowMap(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::vector<GameEntity> gameEntities)
+void ShadowMap::DrawShadowMap(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::vector<GameEntity> gameEntities, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthBufferDSV)
 {
 	context->ClearDepthStencilView(shadowDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
@@ -73,6 +96,7 @@ void ShadowMap::DrawShadowMap(Microsoft::WRL::ComPtr<ID3D11DeviceContext> contex
 	context->OMSetRenderTargets(1, &nullRTV, shadowDSV.Get());
 
 	context->PSSetShader(0, 0, 0);
+	context->RSSetState(shadowRasterizer.Get());
 
 	D3D11_VIEWPORT viewport = {};
 	viewport.Width = (float)shadowMapResolution;
@@ -94,4 +118,11 @@ void ShadowMap::DrawShadowMap(Microsoft::WRL::ComPtr<ID3D11DeviceContext> contex
 		// Note: Your code may differ significantly here!
 		entity.GetMesh()->Draw(context);
 	}
+
+	context->RSSetState(0);
+
+	viewport.Width = (float)windowWidth;
+	viewport.Height = (float)windowHeight;
+	context->RSSetViewports(1, &viewport);
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthBufferDSV.Get());
 }

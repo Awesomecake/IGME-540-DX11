@@ -12,6 +12,8 @@ Texture2D RoughnessMap : register(t2);
 Texture2D MetalnessMap : register(t3);
 SamplerState BasicSampler : register(s0);
 
+Texture2D ShadowMap : register(t4);
+SamplerComparisonState ShadowSampler : register(s1);
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
 // 
@@ -23,6 +25,19 @@ SamplerState BasicSampler : register(s0);
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {    
+    // Perform the perspective divide (divide by W) ourselves
+    input.shadowMapPos /= input.shadowMapPos.w;
+    // Convert the normalized device coordinates to UVs for sampling
+    float2 shadowUV = input.shadowMapPos.xy * 0.5f + 0.5f;
+    shadowUV.y = 1 - shadowUV.y; // Flip the Y
+    // Grab the distances we need: light-to-pixel and closest-surface
+    float distToLight = input.shadowMapPos.z;
+    // Get a ratio of comparison results using SampleCmpLevelZero()
+    float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, distToLight).r;
+    
+    //if (shadowAmount < distToLight)
+    //    return float4(0, 0, 0, 1);
+    
     input.normal = normalize(input.normal);
     float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
     unpackedNormal = normalize(unpackedNormal); // Don’t forget to normalize!
@@ -43,7 +58,7 @@ float4 main(VertexToPixel input) : SV_TARGET
     // Assumes that input.normal is the normal later in the shader
     input.normal = mul(unpackedNormal, TBN); // Note multiplication order!
         
-    float3 totalLight = CalcLights(input, surfaceColor.xyz,specularColor,roughness,metalness);
+    float3 totalLight = CalcLights(input, surfaceColor.xyz,specularColor,roughness,metalness, shadowAmount);
         
     return float4(pow(surfaceColor.xyz * albedoColor * totalLight, 1.0f / 2.2f), 1);
 }
