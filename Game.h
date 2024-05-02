@@ -63,6 +63,21 @@ public:
 	//Shadow Map
 	ShadowMap shadowMap;
 
+	//Post Processing
+	// Resources that are shared among all post processes
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
+	std::shared_ptr<SimpleVertexShader> ppVS;
+	// Resources that are tied to a particular post process
+	std::shared_ptr<SimplePixelShader> ppPS1;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV1; // For rendering
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV1; // For sampling
+
+	std::shared_ptr<SimplePixelShader> ppPS2;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV2; // For rendering
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV2; // For sampling
+
+	int blurAmount = 1;
+
 private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
@@ -71,7 +86,6 @@ private:
 	void CreateMaterial(std::wstring albedoFile, std::wstring normalFile, std::wstring roughnessFile, std::wstring metalnessFile);
 	
 	std::shared_ptr<SimplePixelShader> pixelShader;
-	std::shared_ptr<SimplePixelShader> pixelShader2;
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimpleVertexShader> shadowMapVertexShader;
 

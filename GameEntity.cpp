@@ -26,7 +26,7 @@ std::shared_ptr<Material> GameEntity::GetMaterial()
 	return material;
 }
 
-void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera, std::vector<Light> lights)
+void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
 {
 	DirectX::XMFLOAT2 mousePos = DirectX::XMFLOAT2((float)Input::GetInstance().GetMouseX(), (float)Input::GetInstance().GetMouseY());
 	material->PrepareMaterial();
@@ -36,7 +36,6 @@ void GameEntity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::
 	material->pixelShader->SetFloat2("mousePos", mousePos);
 	material->pixelShader->SetFloat("roughness", material->roughness);
 	material->pixelShader->SetFloat3("cameraPos", camera->GetTransform().GetPosition());
-	material->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 	
 	material->pixelShader->CopyAllBufferData();
 

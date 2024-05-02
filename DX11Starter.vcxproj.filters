@@ -174,9 +174,6 @@
     <FxCompile Include="VertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="PixelShader2.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="SkyVertexShader.hlsl">
       <Filter>Shaders\SkyBoxShader</Filter>
     </FxCompile>
@@ -184,6 +181,15 @@
       <Filter>Shaders\SkyBoxShader</Filter>
     </FxCompile>
     <FxCompile Include="ShadowMapVertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="FullScreenTriangle.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessBlurPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessPixelizePS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

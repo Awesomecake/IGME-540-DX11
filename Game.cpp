@@ -83,6 +83,46 @@ void Game::Init()
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
 
+	// Sampler state for post processing
+	D3D11_SAMPLER_DESC ppSampDesc = {};
+	ppSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	ppSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&ppSampDesc, ppSampler.GetAddressOf());
+
+	// Describe the texture we're creating
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = windowWidth;
+	textureDesc.Height = windowHeight;
+	textureDesc.ArraySize = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.MipLevels = 1;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	// Create the resource (no need to track it after the views are created below)
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture;
+	device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
+
+	// Create the Render Target View
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	device->CreateRenderTargetView(ppTexture.Get(), &rtvDesc, ppRTV1.ReleaseAndGetAddressOf());
+	// Create the Shader Resource View
+	// By passing it a null description for the SRV, we
+	// get a "default" SRV that has access to the entire resource
+	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV1.ReleaseAndGetAddressOf());
+	
+	device->CreateRenderTargetView(ppTexture.Get(), &rtvDesc, ppRTV2.ReleaseAndGetAddressOf());
+	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV2.ReleaseAndGetAddressOf());
+
 	shadowMap = ShadowMap(device, shadowMapVertexShader, windowWidth, windowHeight);
 
 	CreateMaterial(PBR_Assets "floor_albedo.png", PBR_Assets "floor_normals.png", PBR_Assets "floor_roughness.png", PBR_Assets "floor_metal.png");
@@ -166,10 +206,13 @@ void Game::Init()
 void Game::LoadShaders()
 {
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader.cso").c_str());
-	pixelShader2 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader2.cso").c_str());
 	vertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader.cso").c_str());
 	
 	shadowMapVertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"ShadowMapVertexShader.cso").c_str());
+
+	ppPS1 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessBlurPS.cso").c_str());
+	ppPS2 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessPixelizePS.cso").c_str());
+	ppVS = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"FullScreenTriangle.cso").c_str());
 }
 
 void Game::CreateMaterial(std::wstring albedoFile, std::wstring normalFile, std::wstring roughnessFile, std::wstring metalnessFile)
@@ -271,13 +314,17 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Clear the back buffer (erases what's on the screen)
 		float bgColor[4] = { ambientColor.x, ambientColor.y, ambientColor.z, 1};
 		context->ClearRenderTargetView(backBufferRTV.Get(), bgColor);
+		context->ClearRenderTargetView(ppRTV1.Get(), bgColor);
+		context->ClearRenderTargetView(ppRTV2.Get(), bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	
 	}
 
 	shadowMap.DrawShadowMap(context,gameEntities,backBufferRTV, depthBufferDSV);
-	ImGui::Image(shadowMap.shadowSRV.Get(), ImVec2(512, 512));
+
+	context->OMSetRenderTargets(1, ppRTV1.GetAddressOf(), depthBufferDSV.Get());
 
 	for(GameEntity entity : gameEntities)
 	{
@@ -285,26 +332,53 @@ void Game::Draw(float deltaTime, float totalTime)
 		entity.GetMaterial()->pixelShader->SetFloat("totalTime", totalTime);
 		entity.GetMaterial()->pixelShader->SetShaderResourceView("ShadowMap", shadowMap.shadowSRV.Get());
 		entity.GetMaterial()->pixelShader->SetSamplerState("ShadowSampler", shadowMap.shadowSampler);
+		entity.GetMaterial()->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+
 		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightView", shadowMap.shadowViewMatrix);
 		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightProjection", shadowMap.shadowProjectionMatrix);
 
-		entity.Draw(context, cameras[selectedCamera],lights);
+		entity.Draw(context, cameras[selectedCamera]);
 	}
 
 	sky->ambient = ambientColor;
 	sky->Draw(context,cameras[selectedCamera]);
 
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
+	//context->OMSetRenderTargets(1, ppRTV2.GetAddressOf(), depthBufferDSV.Get());
+
+	// Activate shaders and bind resources
+	// Also set any required cbuffer data (not shown)
+	ppVS->SetShader();
+	ppPS1->SetShader();
+	ppPS1->SetShaderResourceView("Pixels", ppSRV1.Get());
+	ppPS1->SetFloat("pixelWidth", 1.f/windowWidth);
+	ppPS1->SetFloat("pixelHeight", 1.f/windowHeight);
+	ppPS1->SetInt("blurRadius", blurAmount);
+	ppPS1->SetSamplerState("ClampSampler", ppSampler.Get());
+	ppPS1->CopyAllBufferData();
+
+	context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
+	ImGui::Image(shadowMap.shadowSRV.Get(), ImVec2(512, 512));
+
+	//ppPS2->SetShader();
+	//ppPS2->SetShaderResourceView("Pixels", ppSRV2.Get());
+	//ppPS2->SetSamplerState("ClampSampler", ppSampler.Get());
+	//ppPS2->CopyAllBufferData();
+
+	//context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+
 	ImGui::Render(); // Turns this frame’s UI into renderable triangles
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
-
-
-	ID3D11ShaderResourceView* nullSRVs[128] = {};
-	context->PSSetShaderResources(0, 128, nullSRVs);
 
 	// Frame END
 	// - These should happen exactly ONCE PER FRAME
 	// - At the very end of the frame (after drawing *everything*)
 	{
+		ID3D11ShaderResourceView* nullSRVs[128] = {};
+		context->PSSetShaderResources(0, 128, nullSRVs);
+
 		// Present the back buffer to the user
 		//  - Puts the results of what we've drawn onto the window
 		//  - Without this, the user never sees anything
@@ -483,6 +557,13 @@ void Game::BuildUI(float deltaTime, float totalTime)
 				gameEntities[i].SetMaterial(materials[ImGuiMaterialIndex % materials.size()]);
 			}
 		}
+
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Post Processing"))
+	{
+
+		ImGui::DragInt("Blur Intensity", &blurAmount, 0.1f, 1, 10, "%d");
 
 		ImGui::TreePop();
 	}
