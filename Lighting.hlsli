@@ -43,7 +43,6 @@ struct Light
 
 cbuffer LightBuffer : register(b1)
 {
-    float3 ambient;
     Light lights[MAX_NUM_LIGHTS];
     float roughness;
     float3 cameraPos;

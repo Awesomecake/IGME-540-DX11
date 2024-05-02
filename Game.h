@@ -12,6 +12,7 @@
 #include "Lights.h"
 #include "Sky.h"
 #include "ShadowMap.h"
+#include "PostProcess.h"
 
 #include <memory>
 #include <vector>
@@ -32,6 +33,7 @@ public:
 	void ImGuiUpdate(float deltaTime, float totalTime);
 	void BuildUI(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
+	void RenderScene();
 
 	//ImGui test value
 	bool showImGuiDemoWindow = false;
@@ -56,7 +58,6 @@ public:
 	std::shared_ptr<Mesh> torus;
 	std::shared_ptr<Mesh> quad;
 
-
 	//Materials
 	std::vector<std::shared_ptr<Material>> materials;
 
@@ -64,19 +65,13 @@ public:
 	ShadowMap shadowMap;
 
 	//Post Processing
-	// Resources that are shared among all post processes
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
 	std::shared_ptr<SimpleVertexShader> ppVS;
-	// Resources that are tied to a particular post process
-	std::shared_ptr<SimplePixelShader> ppPS1;
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV1; // For rendering
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV1; // For sampling
 
-	std::shared_ptr<SimplePixelShader> ppPS2;
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV2; // For rendering
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV2; // For sampling
+	PostProcess postProcess1;
+	PostProcess postProcess2;
 
-	int blurAmount = 0;
+	float blurAmount = 0;
 	float pixelIntensity = 0;
 
 private:
@@ -87,6 +82,9 @@ private:
 	void CreateMaterial(std::wstring albedoFile, std::wstring normalFile, std::wstring roughnessFile, std::wstring metalnessFile);
 	
 	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimplePixelShader> ppPS1;
+	std::shared_ptr<SimplePixelShader> ppPS2;
+
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimpleVertexShader> shadowMapVertexShader;
 

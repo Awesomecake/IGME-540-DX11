@@ -92,39 +92,12 @@ void Game::Init()
 	ppSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&ppSampDesc, ppSampler.GetAddressOf());
 
-	// Describe the texture we're creating
-	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = windowWidth;
-	textureDesc.Height = windowHeight;
-	textureDesc.ArraySize = 1;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.MipLevels = 1;
-	textureDesc.MiscFlags = 0;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	// Create the resource (no need to track it after the views are created below)
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture;
-	device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
+	postProcess1 = PostProcess(device,windowWidth,windowHeight, ppSampler, ppPS1);
+	postProcess1.pixelShaderFloatData.insert({ "blurRadius", &blurAmount });
 
-	// Create the Render Target View
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = textureDesc.Format;
-	rtvDesc.Texture2D.MipSlice = 0;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	device->CreateRenderTargetView(ppTexture.Get(), &rtvDesc, ppRTV1.ReleaseAndGetAddressOf());
-	// Create the Shader Resource View
-	// By passing it a null description for the SRV, we
-	// get a "default" SRV that has access to the entire resource
-	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV1.ReleaseAndGetAddressOf());
+	postProcess2 = PostProcess(device, windowWidth, windowHeight, ppSampler, ppPS2);
+	postProcess2.pixelShaderFloatData.insert({ "pixelLevel", &pixelIntensity });
 	
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture2;
-	device->CreateTexture2D(&textureDesc, 0, ppTexture2.GetAddressOf());
-	device->CreateRenderTargetView(ppTexture2.Get(), &rtvDesc, ppRTV2.ReleaseAndGetAddressOf());
-	device->CreateShaderResourceView(ppTexture2.Get(), 0, ppSRV2.ReleaseAndGetAddressOf());
-
 	shadowMap = ShadowMap(device, shadowMapVertexShader, windowWidth, windowHeight);
 
 	CreateMaterial(PBR_Assets "floor_albedo.png", PBR_Assets "floor_normals.png", PBR_Assets "floor_roughness.png", PBR_Assets "floor_metal.png");
@@ -316,8 +289,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Clear the back buffer (erases what's on the screen)
 		float bgColor[4] = { ambientColor.x, ambientColor.y, ambientColor.z, 1};
 		context->ClearRenderTargetView(backBufferRTV.Get(), bgColor);
-		context->ClearRenderTargetView(ppRTV1.Get(), bgColor);
-		context->ClearRenderTargetView(ppRTV2.Get(), bgColor);
+
+		postProcess1.ClearRTV(context, bgColor);
+		postProcess2.ClearRTV(context, bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -326,51 +300,13 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	shadowMap.DrawShadowMap(context,gameEntities,backBufferRTV, depthBufferDSV);
 
-	context->OMSetRenderTargets(1, ppRTV1.GetAddressOf(), depthBufferDSV.Get());
+	//Setup First Post Processing Target
+	context->OMSetRenderTargets(1, postProcess1.ppRTV.GetAddressOf(), depthBufferDSV.Get());
+	RenderScene();
 
-	for(GameEntity entity : gameEntities)
-	{
-		entity.GetMaterial()->pixelShader->SetFloat3("ambient", ambientColor);
-		entity.GetMaterial()->pixelShader->SetFloat("totalTime", totalTime);
-		entity.GetMaterial()->pixelShader->SetShaderResourceView("ShadowMap", shadowMap.shadowSRV.Get());
-		entity.GetMaterial()->pixelShader->SetSamplerState("ShadowSampler", shadowMap.shadowSampler);
-		entity.GetMaterial()->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
-
-		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightView", shadowMap.shadowViewMatrix);
-		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightProjection", shadowMap.shadowProjectionMatrix);
-
-		entity.Draw(context, cameras[selectedCamera]);
-	}
-
-	sky->ambient = ambientColor;
-	sky->Draw(context,cameras[selectedCamera]);
-
-	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
-	context->OMSetRenderTargets(1, ppRTV2.GetAddressOf(), depthBufferDSV.Get());
-
-	// Activate shaders and bind resources
-	// Also set any required cbuffer data (not shown)
 	ppVS->SetShader();
-	ppPS1->SetShader();
-	ppPS1->SetShaderResourceView("Pixels", ppSRV1.Get());
-	ppPS1->SetFloat("pixelWidth", 1.f/windowWidth);
-	ppPS1->SetFloat("pixelHeight", 1.f/windowHeight);
-	ppPS1->SetInt("blurRadius", blurAmount);
-	ppPS1->SetSamplerState("ClampSampler", ppSampler.Get());
-	ppPS1->CopyAllBufferData();
-
-	context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
-
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
-	ImGui::Image(shadowMap.shadowSRV.Get(), ImVec2(512, 512));
-
-	ppPS2->SetShader();
-	ppPS2->SetShaderResourceView("Pixels", ppSRV2.Get());
-	ppPS2->SetSamplerState("ClampSampler", ppSampler.Get());
-	ppPS2->SetFloat("pixelLevel", pixelIntensity);
-	ppPS2->CopyAllBufferData();
-
-	context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+	postProcess1.RenderPostProcess(context, postProcess2.ppRTV, depthBufferDSV);
+	postProcess2.RenderPostProcess(context, backBufferRTV, 0);
 
 	ImGui::Render(); // Turns this frame’s UI into renderable triangles
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
@@ -391,6 +327,24 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Must re-bind buffers after presenting, as they become unbound
 		context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthBufferDSV.Get());
 	}
+}
+
+void Game::RenderScene()
+{
+	for (GameEntity entity : gameEntities)
+	{
+		entity.GetMaterial()->pixelShader->SetShaderResourceView("ShadowMap", shadowMap.shadowSRV.Get());
+		entity.GetMaterial()->pixelShader->SetSamplerState("ShadowSampler", shadowMap.shadowSampler);
+		entity.GetMaterial()->pixelShader->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+
+		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightView", shadowMap.shadowViewMatrix);
+		entity.GetMaterial()->vertexShader->SetMatrix4x4("lightProjection", shadowMap.shadowProjectionMatrix);
+
+		entity.Draw(context, cameras[selectedCamera]);
+	}
+
+	sky->ambient = ambientColor;
+	sky->Draw(context, cameras[selectedCamera]);
 }
 
 #pragma region ImGui
@@ -566,7 +520,7 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	if (ImGui::TreeNode("Post Processing"))
 	{
 
-		ImGui::DragInt("Blur Intensity", &blurAmount, 0.1f, 0, 10, "%d");
+		ImGui::DragFloat("Blur Intensity", &blurAmount, 0.1f, 0, 10, "%.01f");
 		ImGui::DragFloat("Pixel Intensity", &pixelIntensity, 0.1f, 0, 10, "%.01f");
 
 		ImGui::TreePop();

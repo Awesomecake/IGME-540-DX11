@@ -1,8 +1,8 @@
 cbuffer externalData : register(b0)
 {
-    int blurRadius;
-    float pixelWidth;
-    float pixelHeight;
+    float blurRadius;
+    float windowWidth;
+    float windowHeight;
 }
 
 struct VertexToPixel
@@ -26,7 +26,7 @@ float4 main(VertexToPixel input) : SV_TARGET
         {
             // Calculate the uv for this sample
             float2 uv = input.uv;
-            uv += float2(x * pixelWidth, y * pixelHeight);
+            uv += float2(x * (1 / windowWidth), y * (1 / windowHeight));
             // Add this color to the running total
             total += Pixels.Sample(ClampSampler, uv);
             sampleCount++;

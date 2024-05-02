@@ -3,7 +3,6 @@
 cbuffer ConstantBuffer : register(b0)
 {
     float4 surfaceColor;
-    float totalTime;
 }
 
 Texture2D Albedo : register(t0);
