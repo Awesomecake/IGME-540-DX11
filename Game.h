@@ -76,7 +76,8 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV2; // For rendering
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV2; // For sampling
 
-	int blurAmount = 1;
+	int blurAmount = 0;
+	float pixelIntensity = 0;
 
 private:
 

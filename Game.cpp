@@ -120,8 +120,10 @@ void Game::Init()
 	// get a "default" SRV that has access to the entire resource
 	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV1.ReleaseAndGetAddressOf());
 	
-	device->CreateRenderTargetView(ppTexture.Get(), &rtvDesc, ppRTV2.ReleaseAndGetAddressOf());
-	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV2.ReleaseAndGetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture2;
+	device->CreateTexture2D(&textureDesc, 0, ppTexture2.GetAddressOf());
+	device->CreateRenderTargetView(ppTexture2.Get(), &rtvDesc, ppRTV2.ReleaseAndGetAddressOf());
+	device->CreateShaderResourceView(ppTexture2.Get(), 0, ppSRV2.ReleaseAndGetAddressOf());
 
 	shadowMap = ShadowMap(device, shadowMapVertexShader, windowWidth, windowHeight);
 
@@ -343,8 +345,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	sky->ambient = ambientColor;
 	sky->Draw(context,cameras[selectedCamera]);
 
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
-	//context->OMSetRenderTargets(1, ppRTV2.GetAddressOf(), depthBufferDSV.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
+	context->OMSetRenderTargets(1, ppRTV2.GetAddressOf(), depthBufferDSV.Get());
 
 	// Activate shaders and bind resources
 	// Also set any required cbuffer data (not shown)
@@ -359,15 +361,16 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
 
-	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
 	ImGui::Image(shadowMap.shadowSRV.Get(), ImVec2(512, 512));
 
-	//ppPS2->SetShader();
-	//ppPS2->SetShaderResourceView("Pixels", ppSRV2.Get());
-	//ppPS2->SetSamplerState("ClampSampler", ppSampler.Get());
-	//ppPS2->CopyAllBufferData();
+	ppPS2->SetShader();
+	ppPS2->SetShaderResourceView("Pixels", ppSRV2.Get());
+	ppPS2->SetSamplerState("ClampSampler", ppSampler.Get());
+	ppPS2->SetFloat("pixelLevel", pixelIntensity);
+	ppPS2->CopyAllBufferData();
 
-	//context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+	context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
 
 	ImGui::Render(); // Turns this frame’s UI into renderable triangles
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
@@ -563,7 +566,8 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	if (ImGui::TreeNode("Post Processing"))
 	{
 
-		ImGui::DragInt("Blur Intensity", &blurAmount, 0.1f, 1, 10, "%d");
+		ImGui::DragInt("Blur Intensity", &blurAmount, 0.1f, 0, 10, "%d");
+		ImGui::DragFloat("Pixel Intensity", &pixelIntensity, 0.1f, 0, 10, "%.01f");
 
 		ImGui::TreePop();
 	}

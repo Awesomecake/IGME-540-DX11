@@ -1,6 +1,6 @@
 cbuffer externalData : register(b0)
 {
-    float pizelLevel;
+    float pixelLevel;
 }
 
 struct VertexToPixel
@@ -14,7 +14,7 @@ SamplerState ClampSampler : register(s0);
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    float pixelSize = 0.02;
+    float pixelSize = 0.005 * pixelLevel+0.0001;
     float2 uv = input.uv;
     uv = float2(uv.r - (uv.r % pixelSize), uv.g - (uv.g % pixelSize));
 
