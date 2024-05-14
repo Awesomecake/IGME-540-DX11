@@ -3,7 +3,6 @@
 PostProcess::PostProcess(Microsoft::WRL::ComPtr<ID3D11Device> device, int _windowWidth, int _windowHeight, Microsoft::WRL::ComPtr<ID3D11SamplerState> _ppSampler, std::shared_ptr<SimplePixelShader> _ppPS)
 {
 	// Describe the texture we're creating
-	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = _windowWidth;
 	textureDesc.Height = _windowHeight;
 	textureDesc.ArraySize = 1;
@@ -20,7 +19,6 @@ PostProcess::PostProcess(Microsoft::WRL::ComPtr<ID3D11Device> device, int _windo
 	device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
 
 	// Create the Render Target View
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 	rtvDesc.Format = textureDesc.Format;
 	rtvDesc.Texture2D.MipSlice = 0;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -39,6 +37,25 @@ PostProcess::PostProcess(Microsoft::WRL::ComPtr<ID3D11Device> device, int _windo
 void PostProcess::ClearRTV(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, float *bgColor)
 {
 	context->ClearRenderTargetView(ppRTV.Get(), bgColor);
+}
+
+void PostProcess::Resize(Microsoft::WRL::ComPtr<ID3D11Device> device, int _windowWidth, int _windowHeight)
+{
+	windowWidth = _windowWidth;
+	windowHeight = _windowHeight;
+
+	textureDesc.Width = _windowWidth;
+	textureDesc.Height = _windowHeight;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture;
+	device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
+
+	// Create the Render Target View
+	device->CreateRenderTargetView(ppTexture.Get(), &rtvDesc, ppRTV.ReleaseAndGetAddressOf());
+	// Create the Shader Resource View
+	// By passing it a null description for the SRV, we
+	// get a "default" SRV that has access to the entire resource
+	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV.ReleaseAndGetAddressOf());
 }
 
 void PostProcess::RenderPostProcess(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTarget, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthBufferSRV)

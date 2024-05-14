@@ -144,7 +144,7 @@ void Sky::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_
 	vs->CopyAllBufferData();
 
 	ps->SetShader();
-	ps->SetSamplerState("BasicSampler", sampleState);
+	ps->SetSamplerState("SkyBoxSampler", sampleState);
 	ps->SetShaderResourceView("cubeMap", cubeMapTexture);
 	ps->SetFloat3("ambient", ambient);
 	ps->CopyAllBufferData();

@@ -70,9 +70,15 @@ public:
 
 	PostProcess postProcess1;
 	PostProcess postProcess2;
+	PostProcess postProcess3;
+	PostProcess postProcess4;
 
 	float blurAmount = 0;
 	float pixelIntensity = 0;
+	float sharpenAmount = 0;
+
+	float mouseX;
+	float mouseY;
 
 private:
 
@@ -84,6 +90,8 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::shared_ptr<SimplePixelShader> ppPS1;
 	std::shared_ptr<SimplePixelShader> ppPS2;
+	std::shared_ptr<SimplePixelShader> ppPS3;
+	std::shared_ptr<SimplePixelShader> ppPS4;
 
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimpleVertexShader> shadowMapVertexShader;

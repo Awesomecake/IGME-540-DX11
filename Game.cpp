@@ -93,11 +93,18 @@ void Game::Init()
 	device->CreateSamplerState(&ppSampDesc, ppSampler.GetAddressOf());
 
 	postProcess1 = PostProcess(device,windowWidth,windowHeight, ppSampler, ppPS1);
-	postProcess1.pixelShaderFloatData.insert({ "blurRadius", &blurAmount });
+	postProcess1.pixelShaderFloatData.insert({ "sharpenAmount", &sharpenAmount });
 
 	postProcess2 = PostProcess(device, windowWidth, windowHeight, ppSampler, ppPS2);
-	postProcess2.pixelShaderFloatData.insert({ "pixelLevel", &pixelIntensity });
-	
+	postProcess2.pixelShaderFloatData.insert({ "blurRadius", &blurAmount });
+
+	postProcess3 = PostProcess(device, windowWidth, windowHeight, ppSampler, ppPS3);
+	postProcess3.pixelShaderFloatData.insert({ "pixelLevel", &pixelIntensity });
+
+	postProcess4 = PostProcess(device, windowWidth, windowHeight, ppSampler, ppPS4);
+	postProcess4.pixelShaderFloatData.insert({ "mouseX", &mouseX });
+	postProcess4.pixelShaderFloatData.insert({ "mouseY", &mouseY });
+
 	shadowMap = ShadowMap(device, shadowMapVertexShader, windowWidth, windowHeight);
 
 	CreateMaterial(PBR_Assets "floor_albedo.png", PBR_Assets "floor_normals.png", PBR_Assets "floor_roughness.png", PBR_Assets "floor_metal.png");
@@ -185,8 +192,11 @@ void Game::LoadShaders()
 	
 	shadowMapVertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"ShadowMapVertexShader.cso").c_str());
 
-	ppPS1 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessBlurPS.cso").c_str());
-	ppPS2 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessPixelizePS.cso").c_str());
+	ppPS1 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessSharpenPS.cso").c_str());
+	ppPS2 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessBlurPS.cso").c_str());
+	ppPS3 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessPixelizePS.cso").c_str());
+	ppPS4 = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PostProcessChromaticAberrationPS.cso").c_str());
+
 	ppVS = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"FullScreenTriangle.cso").c_str());
 }
 
@@ -254,6 +264,12 @@ void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
+	postProcess1.Resize(device, windowWidth, windowHeight);
+	postProcess2.Resize(device, windowWidth, windowHeight);
+	postProcess3.Resize(device, windowWidth, windowHeight);
+	postProcess4.Resize(device, windowWidth, windowHeight);
+
+	shadowMap.Resize(windowWidth, windowHeight);
 
 	for (size_t i = 0; i < cameras.size(); i++)
 	{
@@ -274,6 +290,9 @@ void Game::Update(float deltaTime, float totalTime)
 	ImGuiUpdate(deltaTime, totalTime);
 	BuildUI(deltaTime, totalTime);
 
+	mouseX = (Input::GetInstance().GetMouseX()/(float) windowWidth);
+	mouseY = (Input::GetInstance().GetMouseY() / (float)windowHeight);
+
 	gameEntities[3].GetTransform().SetPosition(3*cos(totalTime), -3, 3*sin(totalTime));
 }
 
@@ -292,21 +311,24 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		postProcess1.ClearRTV(context, bgColor);
 		postProcess2.ClearRTV(context, bgColor);
+		postProcess3.ClearRTV(context, bgColor);
+		postProcess4.ClearRTV(context, bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
-	
 	}
 
 	shadowMap.DrawShadowMap(context,gameEntities,backBufferRTV, depthBufferDSV);
 
-	//Setup First Post Processing Target
-	context->OMSetRenderTargets(1, postProcess1.ppRTV.GetAddressOf(), depthBufferDSV.Get());
+	context->OMSetRenderTargets(1, postProcess1.ppRTV.GetAddressOf(), depthBufferDSV.Get()); //Setup First Post Processing Target
+	
 	RenderScene();
 
 	ppVS->SetShader();
-	postProcess1.RenderPostProcess(context, postProcess2.ppRTV, depthBufferDSV);
-	postProcess2.RenderPostProcess(context, backBufferRTV, 0);
+	//postProcess1.RenderPostProcess(context, postProcess2.ppRTV, depthBufferDSV);
+	//postProcess2.RenderPostProcess(context, postProcess3.ppRTV, depthBufferDSV);
+	//postProcess3.RenderPostProcess(context, postProcess4.ppRTV, depthBufferDSV);
+	postProcess1.RenderPostProcess(context, backBufferRTV, 0);
 
 	ImGui::Render(); // Turns this frame’s UI into renderable triangles
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the screen
@@ -519,7 +541,7 @@ void Game::BuildUI(float deltaTime, float totalTime)
 	}
 	if (ImGui::TreeNode("Post Processing"))
 	{
-
+		ImGui::DragFloat("Sharpen Intensity", &sharpenAmount, 0.1f, 0, 10, "%.01f");
 		ImGui::DragFloat("Blur Intensity", &blurAmount, 0.1f, 0, 10, "%.01f");
 		ImGui::DragFloat("Pixel Intensity", &pixelIntensity, 0.1f, 0, 10, "%.01f");
 

@@ -33,31 +33,20 @@ float4 main(VertexToPixel input) : SV_TARGET
     float distToLight = input.shadowMapPos.z;
     // Get a ratio of comparison results using SampleCmpLevelZero()
     float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, distToLight).r;
-    
-    //if (shadowAmount < distToLight)
-    //    return float4(0, 0, 0, 1);
-    
-    input.normal = normalize(input.normal);
-    float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
-    unpackedNormal = normalize(unpackedNormal); // Don’t forget to normalize!
+
+    float3 unpackedNormal = normalize(NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1);
     
     float3 albedoColor = pow(Albedo.Sample(BasicSampler, input.uv).rgb, 2.2f);
     float roughness = RoughnessMap.Sample(BasicSampler, input.uv).r;
     float metalness = MetalnessMap.Sample(BasicSampler, input.uv).r;
     float3 specularColor = lerp(F0_NON_METAL, albedoColor.rgb, metalness);
     
-    // Feel free to adjust/simplify this code to fit with your existing shader(s)
-    // Simplifications include not re-normalizing the same vector more than once!
-    float3 N = normalize(input.normal); // Must be normalized here or before
+    input.normal = normalize(input.normal);
     float3 T = normalize(input.tangent); // Must be normalized here or before
-    T = normalize(T - N * dot(T, N)); // Gram-Schmidt assumes T&N are normalized!
-    float3 B = cross(T, N);
-    float3x3 TBN = float3x3(T, B, N);
-    
-    // Assumes that input.normal is the normal later in the shader
-    input.normal = mul(unpackedNormal, TBN); // Note multiplication order!
+    T = normalize(T - input.normal * dot(T, input.normal)); // Gram-Schmidt assumes T&N are normalized!
+    input.normal = mul(unpackedNormal, float3x3(T, cross(T, input.normal), input.normal)); // Note multiplication order!
         
     float3 totalLight = CalcLights(input, surfaceColor.xyz,specularColor,roughness,metalness, shadowAmount);
-        
+ 
     return float4(pow(surfaceColor.xyz * albedoColor * totalLight, 1.0f / 2.2f), 1);
 }

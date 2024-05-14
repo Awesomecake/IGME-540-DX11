@@ -67,6 +67,12 @@ ShadowMap::ShadowMap(Microsoft::WRL::ComPtr<ID3D11Device> device, std::shared_pt
 
 ShadowMap::~ShadowMap() { }
 
+void ShadowMap::Resize(int _windowWidth, int _windowHeight)
+{
+	windowWidth = _windowWidth;
+	windowHeight = _windowHeight;
+}
+
 void ShadowMap::MakeProjection(XMFLOAT3 direction)
 {
 

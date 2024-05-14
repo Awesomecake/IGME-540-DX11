@@ -36,6 +36,9 @@
     <Filter Include="Shaders\SkyBoxShader">
       <UniqueIdentifier>{dff5c432-746d-49b7-81a5-5417c2808834}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\PostProcessing">
+      <UniqueIdentifier>{dccf9a7a-bc32-4d04-a3d8-dcf0bf9a48fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -190,13 +193,19 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="FullScreenTriangle.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\PostProcessing</Filter>
     </FxCompile>
     <FxCompile Include="PostProcessBlurPS.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\PostProcessing</Filter>
     </FxCompile>
     <FxCompile Include="PostProcessPixelizePS.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessSharpenPS.hlsl">
+      <Filter>Shaders\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="PostProcessChromaticAberrationPS.hlsl">
+      <Filter>Shaders\PostProcessing</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

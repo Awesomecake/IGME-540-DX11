@@ -9,9 +9,9 @@ class Sky
 {
 private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampleState;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeMapTexture;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> stencilState;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeMapTexture;
 
 	std::shared_ptr<Mesh> mesh;
 	std::shared_ptr<SimplePixelShader> ps;

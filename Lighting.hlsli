@@ -109,4 +109,18 @@ float3 CalcLights(VertexToPixel input, float3 surfaceColor, float3 specularColor
     return light;
 }
 
+//////////////////////
+//Object Reflections
+//////////////////////
+
+// Schlick’s approx. of Fresnel term: F(n,v,f0) = f0 + (1-f0)(1 - (n dot v))^5
+// n - Normal vector
+// v - View vector
+// f0 – Specular value (usually 0.04 for non-metal objects)
+float SimpleFresnel(float3 n, float3 v, float f0)
+{
+    float NdotV = saturate(dot(n, v));
+    return f0 + (1 - f0) * pow(1 - NdotV, 5);
+}
+
 #endif
